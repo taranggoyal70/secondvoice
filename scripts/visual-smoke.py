@@ -20,16 +20,18 @@ with sync_playwright() as playwright:
     page.wait_for_timeout(1800)
     print(f"initial_console_errors={console_errors}")
     print(f"voice_canvas_count={page.locator('canvas').count()}")
-    assert page.locator(".phrase-chip").count() == 5
+    assert page.locator("canvas").count() == 0
+    assert page.locator(".tape-deck svg").count() == 1
+    assert page.locator(".phrase-key").count() == 5
     page.get_by_role("button", name="Toggle high contrast").click()
     assert "is-high-contrast" in (page.locator(".studio-shell").get_attribute("class") or "")
     page.get_by_role("button", name="Toggle high contrast").click()
     page.screenshot(path=str(OUTPUT / "secondvoice-desktop.png"), full_page=True)
 
-    page.get_by_role("button", name="Run the 90-second demo").click()
+    page.get_by_role("button", name="Play judge demo").click()
     page.wait_for_timeout(1200)
     page.locator(".live-dot--speaking").wait_for()
-    assert page.get_by_text("164 ms", exact=True).is_visible()
+    assert page.get_by_text("First audio 164 ms", exact=True).is_visible()
     assert page.get_by_text("AUDIO", exact=True).is_visible()
     assert "I need" in page.locator(".listener-view blockquote").inner_text()
     page.screenshot(path=str(OUTPUT / "secondvoice-speaking.png"), full_page=True)
@@ -42,7 +44,7 @@ with sync_playwright() as playwright:
     page.get_by_role("button", name="Please ask me directly").click()
     assert page.locator("textarea").input_value() == "Please ask me directly."
 
-    page.get_by_role("button", name="Switch to Spanish").click()
+    page.get_by_role("button", name="English · switch to Spanish").click()
     assert "Quiero responder" in page.locator("textarea").input_value()
     page.keyboard.press("5")
     assert page.locator("textarea").input_value() == "I am ready to continue."

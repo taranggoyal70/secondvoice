@@ -10,9 +10,9 @@
   --yellow: #ffd45a;
   --green: #2a8c66;
   --line: #191a1a;
-  --display: var(--font-body, "Arial Narrow"), "Helvetica Neue", sans-serif;
-  --body: var(--font-body, "Helvetica Neue"), Helvetica, Arial, sans-serif;
-  --mono: var(--font-mono, "SFMono-Regular"), Consolas, monospace;
+  --display: "Barlow Condensed", "Arial Narrow", sans-serif;
+  --body: "Atkinson Hyperlegible", Arial, sans-serif;
+  --mono: "SFMono-Regular", Consolas, monospace;
 }
 
 * { box-sizing: border-box; }
