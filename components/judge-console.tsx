@@ -28,8 +28,36 @@ export function JudgeConsole({
   phase,
   totalWords,
 }: JudgeConsoleProps) {
+  const activeStage = phase === "speaking" ? "voice" : phase === "complete" || phase === "interrupted" ? "listener" : "intent";
+
   return (
     <div className="judge-console">
+      <section className="agent-state" aria-label="Agent state">
+        <div className="console-title">
+          <span><RadioTower size={15} /> Agent state</span>
+          <small>secondvoice/runtime</small>
+        </div>
+        <div className="agent-flow">
+          <div className={activeStage === "intent" ? "is-active" : ""}>
+            <span>01</span>
+            <strong>Intent</strong>
+            <small>phrase + edit</small>
+          </div>
+          <i aria-hidden="true" />
+          <div className={activeStage === "voice" ? "is-active" : ""}>
+            <span>02</span>
+            <strong>Voice</strong>
+            <small>TTS-1 stream</small>
+          </div>
+          <i aria-hidden="true" />
+          <div className={activeStage === "listener" ? "is-active" : ""}>
+            <span>03</span>
+            <strong>Listener</strong>
+            <small>heard boundary</small>
+          </div>
+        </div>
+      </section>
+
       <section className={`listener-view listener-view--${phase}`} aria-label="Listener view">
         <div className="console-title">
           <span><BadgeCheck size={15} /> Listener view</span>

@@ -60,7 +60,7 @@ phrase chips / keyboard / optional STT
                  v
         browser audio worklet
       + sentence timeline reducer
-      + purposeful 3D voice form
+      + purposeful spectral voice terrain
 ```
 
 Recommended stack:

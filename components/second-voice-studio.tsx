@@ -21,7 +21,7 @@ import {
   type StudioPhase,
 } from "@/lib/demo";
 import { JudgeConsole, type EventTone, type StudioEvent } from "./judge-console";
-import { VoiceTapeDeck } from "./voice-tape-deck";
+import { VoiceTerrain } from "./voice-terrain";
 
 const VOICES = [
   { id: "aai-audrey", label: "Audrey", tone: "steady · warm" },
@@ -375,7 +375,7 @@ export function SecondVoiceStudio() {
             </div>
           </div>
 
-          <VoiceTapeDeck energy={energy} phase={phase} progress={progress} reducedMotion={reduceMotion} />
+          <VoiceTerrain energy={energy} phase={phase} progress={progress} reducedMotion={reduceMotion} />
 
           <div className="composer-surface">
             <label htmlFor="sentence">Message</label>

@@ -20,8 +20,7 @@ with sync_playwright() as playwright:
     page.wait_for_timeout(1800)
     print(f"initial_console_errors={console_errors}")
     print(f"voice_canvas_count={page.locator('canvas').count()}")
-    assert page.locator("canvas").count() == 0
-    assert page.locator(".tape-deck svg").count() == 1
+    assert page.locator(".voice-terrain canvas").count() == 1
     assert page.locator(".phrase-key").count() == 5
     page.get_by_role("button", name="Toggle high contrast").click()
     assert "is-high-contrast" in (page.locator(".studio-shell").get_attribute("class") or "")

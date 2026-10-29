@@ -31,7 +31,7 @@ Never commit `.env.local` or place the permanent key in browser code. The app mi
 - streamed PCM playback;
 - `Cancel` handling that drops queued browser audio;
 - best-effort `WordBoundaries` scheduling;
-- real audio-energy input to the 3D voice sculpture;
+- real audio-energy input to a live spectral voice terrain;
 - English and Spanish session configuration;
 - live listener/event evidence console;
 - reduced-motion, high-contrast, keyboard shortcuts, and keyboard-visible focus.
