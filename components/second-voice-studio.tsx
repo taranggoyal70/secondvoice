@@ -6,11 +6,8 @@ import {
   CircleStop,
   Contrast,
   Languages,
-  Mic2,
   Play,
   RotateCcw,
-  ShieldCheck,
-  Sparkles,
   Waves,
 } from "lucide-react";
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
@@ -295,9 +292,12 @@ export function SecondVoiceStudio() {
           <span className="wordmark-mark"><Waves size={19} /></span>
           SECONDVOICE
         </a>
-        <div className="topbar-center">
+        <div className="conversation-state">
           <span className={`live-dot live-dot--${phase}`} />
-          {PHASE_LABELS[phase]}
+          <span>
+            <strong>Maya</strong>
+            <small>{PHASE_LABELS[phase]} · conversation with Alex</small>
+          </span>
         </div>
         <div className="topbar-actions">
           <button
@@ -315,31 +315,32 @@ export function SecondVoiceStudio() {
         </div>
       </header>
 
-      <section className="hero" id="top">
-        <div className="hero-copy">
-          <div className="eyebrow"><ShieldCheck size={16} /> Consent-first assistive speech</div>
-          <h1>Your words.<br /><span>Your timing.</span><br />Still your voice.</h1>
-          <p>
-            Compose with a few intentional inputs. Speak before the sentence is finished.
-            Interrupt instantly. SecondVoice keeps the speaker in control of every turn.
-          </p>
-          <div className="hero-actions">
-            <button className="button button--primary" onClick={runGuidedDemo}>
-              <Play size={17} fill="currentColor" /> Run the 90-second demo
-            </button>
-            <button className="button button--quiet" onClick={reset}>
-              <RotateCcw size={16} /> Reset turn
-            </button>
+      <main className="voice-console" id="top">
+        <aside className="phrase-bank" aria-label="Quick phrases">
+          <div className="panel-heading">
+            <div>
+              <strong>Quick phrases</strong>
+              <span>Press 1–5 or tap</span>
+            </div>
+            <span className="panel-count">{PHRASE_CHIPS.length}</span>
           </div>
-        </div>
+          <div className="phrase-keys">
+            {PHRASE_CHIPS.map((phrase, index) => (
+              <button
+                key={phrase}
+                className="phrase-key"
+                onClick={() => choosePhrase(phrase)}
+                aria-keyshortcuts={`${index + 1}`}
+                title={`Shortcut: ${index + 1}`}
+              >
+                <span>{index + 1}</span>
+                <strong>{phrase}</strong>
+              </button>
+            ))}
+          </div>
 
-        <VoiceTapeDeck energy={energy} phase={phase} progress={progress} reducedMotion={reduceMotion} />
-      </section>
-
-      <section className="instrument" aria-label="SecondVoice instrument">
-        <div className="instrument-rail">
-          <div>
-            <label className="rail-label" htmlFor="voice">Voice</label>
+          <div className="voice-settings">
+            <label htmlFor="voice">Voice</label>
             <select
               id="voice"
               value={voiceId}
@@ -352,97 +353,82 @@ export function SecondVoiceStudio() {
                 <option value={voice.id} key={voice.id}>{voice.label} · {voice.tone}</option>
               ))}
             </select>
-          </div>
-          <div>
-            <span className="rail-label">First audio</span>
-            <strong>{latency ? `${latency} ms` : "—"}</strong>
-          </div>
-          <div>
-            <span className="rail-label">Language</span>
-            <strong>{language.toUpperCase()}</strong>
-          </div>
-          <div>
-            <span className="rail-label">Transport</span>
-            <strong>PCM / 24 kHz</strong>
-          </div>
-        </div>
-
-        <div className="phrase-palette">
-          <div className="section-heading">
-            <span>Intent palette</span>
-            <small>One tap starts the thought</small>
-          </div>
-          <div className="chip-row">
-            {PHRASE_CHIPS.map((phrase, index) => (
-              <button
-                key={phrase}
-                className="phrase-chip"
-                onClick={() => choosePhrase(phrase)}
-                aria-keyshortcuts={`${index + 1}`}
-                title={`Shortcut: ${index + 1}`}
-              >
-                {phrase}
-              </button>
-            ))}
-          </div>
-        </div>
-
-        <div className="sentence-stage">
-          <div className="section-heading">
-            <span>Sentence timeline</span>
-            <small>Solid = heard · outline = not yet heard</small>
-          </div>
-          <div className="word-timeline" aria-live="polite">
-            <AnimatePresence mode="popLayout">
-              {words.map((word, index) => {
-                const heard = index < heardCount;
-                const current = index === activeWord;
-                return (
-                  <motion.span
-                    layout
-                    key={`${word}-${index}`}
-                    className={`timeline-word ${heard ? "is-heard" : ""} ${current ? "is-current" : ""}`}
-                    initial={{ opacity: 0, y: 12 }}
-                    animate={{ opacity: 1, y: 0 }}
-                    exit={{ opacity: 0, y: -8 }}
-                  >
-                    {word}
-                  </motion.span>
-                );
-              })}
-            </AnimatePresence>
-            {phase === "interrupted" && <span className="interrupt-mark">CUT</span>}
-          </div>
-          <label className="composer-label" htmlFor="sentence">Edit the next turn</label>
-          <textarea
-            id="sentence"
-            value={sentence}
-            onChange={(event) => {
-              clearDemoTimers();
-              setSentence(event.target.value);
-              setActiveWord(-1);
-              setHeardCount(0);
-              setPhase("composing");
-            }}
-            rows={3}
-          />
-
-          <div className="transport-row">
-            <div className="transport-group">
-              <button className="button button--live" onClick={speakLive} disabled={!sentence.trim() || phase === "speaking"}>
-                <AudioLines size={18} /> Speak live
-              </button>
-              <button className="button button--interrupt" onClick={interrupt} disabled={phase !== "speaking"}>
-                <CircleStop size={18} /> Interrupt
-              </button>
-            </div>
             <button className="language-control" onClick={switchLanguage}>
-              <Languages size={17} /> {language === "english" ? "Switch to Spanish" : "Switch to English"}
+              <Languages size={18} /> {language === "english" ? "English · switch to Spanish" : "Spanish · switch to English"}
             </button>
           </div>
+        </aside>
 
-          <p className={`system-notice system-notice--${phase}`}>{notice}</p>
+        <section className="composer-console" aria-label="Compose a message">
+          <div className="workspace-heading">
+            <div>
+              <span>Current turn</span>
+              <h1>What do you want to say?</h1>
+            </div>
+            <div className="demo-actions">
+              <button className="button button--demo" onClick={runGuidedDemo}>
+                <Play size={17} fill="currentColor" /> Play judge demo
+              </button>
+              <button className="button button--reset" onClick={reset} aria-label="Reset current turn">
+                <RotateCcw size={18} />
+              </button>
+            </div>
+          </div>
 
+          <VoiceTapeDeck energy={energy} phase={phase} progress={progress} reducedMotion={reduceMotion} />
+
+          <div className="composer-surface">
+            <label htmlFor="sentence">Message</label>
+            <textarea
+              id="sentence"
+              value={sentence}
+              onChange={(event) => {
+                clearDemoTimers();
+                setSentence(event.target.value);
+                setActiveWord(-1);
+                setHeardCount(0);
+                setPhase("composing");
+              }}
+              rows={3}
+            />
+
+            <div className="word-timeline" aria-live="polite">
+              <AnimatePresence mode="popLayout">
+                {words.map((word, index) => {
+                  const heard = index < heardCount;
+                  const current = index === activeWord;
+                  return (
+                    <motion.span
+                      layout
+                      key={`${word}-${index}`}
+                      className={`timeline-word ${heard ? "is-heard" : ""} ${current ? "is-current" : ""}`}
+                      initial={{ opacity: 0, y: 8 }}
+                      animate={{ opacity: 1, y: 0 }}
+                      exit={{ opacity: 0, y: -6 }}
+                    >
+                      {word}
+                    </motion.span>
+                  );
+                })}
+              </AnimatePresence>
+              {phase === "interrupted" ? <span className="interrupt-mark">CUT</span> : null}
+            </div>
+
+            <div className="transport-row">
+              <button className="button button--live" onClick={speakLive} disabled={!sentence.trim() || phase === "speaking"}>
+                <AudioLines size={20} /> Speak this message
+              </button>
+              <button className="button button--interrupt" onClick={interrupt} disabled={phase !== "speaking"}>
+                <CircleStop size={20} /> Stop speaking
+              </button>
+              <span className="latency-readout">First audio {latency ? `${latency} ms` : "—"}</span>
+            </div>
+
+            <p className={`system-notice system-notice--${phase}`}>{notice}</p>
+          </div>
+        </section>
+
+        <aside className="partner-console" aria-label="Listener and service view">
           <JudgeConsole
             activeVoice={activeVoice}
             events={events}
@@ -453,25 +439,8 @@ export function SecondVoiceStudio() {
             phase={phase}
             totalWords={words.length}
           />
-        </div>
-      </section>
-
-      <section className="evidence-strip">
-        <div className="evidence-intro">
-          <span className="eyebrow"><Sparkles size={15} /> The technical proof</span>
-          <h2>The interface shows what the voice system is actually doing.</h2>
-        </div>
-        <div className="evidence-grid">
-          <article><span>01</span><h3>Streams early</h3><p>Partial text enters one persistent TTS session so speech can begin before the thought is fully composed.</p></article>
-          <article><span>02</span><h3>Stops cleanly</h3><p>Cancel halts synthesis and clears browser audio already queued for playback.</p></article>
-          <article><span>03</span><h3>Tracks what landed</h3><p>Word boundaries drive the heard timeline and degrade gracefully if timing is unavailable.</p></article>
-        </div>
-      </section>
-
-      <footer>
-        <span>SECONDVOICE / ASSEMBLYAI TTS HACKATHON</span>
-        <span><Mic2 size={14} /> Built for a speaker, not around them.</span>
-      </footer>
+        </aside>
+      </main>
     </div>
   );
 }
