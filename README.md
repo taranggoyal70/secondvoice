@@ -27,12 +27,14 @@ Never commit `.env.local` or place the permanent key in browser code. The app mi
 - authored responsive voice-instrument UI;
 - guided compose → speak → interrupt → revise replay;
 - real temporary-token route;
-- live AssemblyAI TTS WebSocket transport;
+- live AssemblyAI TTS WebSocket transport with partial-text `Generate` frames;
 - streamed PCM playback;
 - `Cancel` handling that drops queued browser audio;
 - best-effort `WordBoundaries` scheduling;
+- real audio-energy input to the 3D voice sculpture;
 - English and Spanish session configuration;
-- reduced-motion behavior and keyboard-visible focus.
+- live listener/event evidence console;
+- reduced-motion, high-contrast, keyboard shortcuts, and keyboard-visible focus.
 
 ## Project notes
 

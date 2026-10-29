@@ -132,13 +132,55 @@ button:disabled {
 }
 
 .mode-switch {
-  justify-self: end;
   display: flex;
   gap: 4px;
   padding: 4px;
   border: 1px solid var(--line);
   border-radius: 999px;
   background: rgba(0, 0, 0, 0.12);
+}
+
+.topbar-actions {
+  justify-self: end;
+  display: flex;
+  align-items: center;
+  gap: 9px;
+}
+
+.contrast-toggle {
+  display: grid;
+  width: 34px;
+  height: 34px;
+  place-items: center;
+  color: var(--muted);
+  background: transparent;
+  border: 1px solid var(--line);
+  border-radius: 50%;
+  cursor: pointer;
+}
+
+.contrast-toggle:hover,
+.contrast-toggle.is-active {
+  color: var(--porcelain);
+  border-color: rgba(232, 237, 240, 0.45);
+}
+
+.studio-shell.is-high-contrast {
+  --ink: #000000;
+  --ink-raised: #080808;
+  --porcelain: #ffffff;
+  --muted: #cbd5df;
+  --line: rgba(255, 255, 255, 0.38);
+  --cobalt: #6f91ff;
+  --coral: #ff765f;
+  --yellow: #ffe45b;
+  --mint: #a1ffd4;
+  background: #000000;
+}
+
+.studio-shell.is-high-contrast .timeline-word:not(.is-heard):not(.is-current) {
+  color: #d9e0e6;
+  border-color: rgba(255, 255, 255, 0.52);
 }
 
 .mode-switch button {
@@ -718,6 +760,7 @@ footer span:last-child { display: flex; align-items: center; gap: 8px; }
   .topbar { grid-template-columns: 1fr auto; min-height: 62px; padding: 0 18px; }
   .topbar-center { display: none; }
   .wordmark-mark { width: 30px; height: 30px; }
+  .contrast-toggle { width: 30px; height: 30px; }
   .hero { padding: 3.5rem 18px 2.5rem; gap: 2.7rem; }
   .hero h1 { font-size: clamp(3rem, 15vw, 5rem); }
   .sculpture-frame { min-height: 390px; }

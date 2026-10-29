@@ -4,12 +4,11 @@ import { AnimatePresence, motion, useReducedMotion } from "motion/react";
 import dynamic from "next/dynamic";
 import {
   AudioLines,
-  BadgeCheck,
   CircleStop,
+  Contrast,
   Languages,
   Mic2,
   Play,
-  RadioTower,
   RotateCcw,
   ShieldCheck,
   Sparkles,
@@ -25,6 +24,7 @@ import {
   SPANISH_SENTENCE,
   type StudioPhase,
 } from "@/lib/demo";
+import { JudgeConsole, type EventTone, type StudioEvent } from "./judge-console";
 
 const VoiceSculpture = dynamic(
   () => import("./voice-sculpture").then((module) => module.VoiceSculpture),
@@ -41,8 +41,6 @@ const VOICES = [
 ];
 
 type DemoMode = "replay" | "live";
-type EventTone = "signal" | "voice" | "cut" | "complete" | "neutral";
-type StudioEvent = { id: number; label: string; detail: string; at: string; tone: EventTone };
 
 const INITIAL_EVENTS: StudioEvent[] = [
   { id: 0, label: "READY", detail: "waiting for speaker intent", at: "T+0.00", tone: "neutral" },
@@ -58,6 +56,8 @@ export function SecondVoiceStudio() {
   const [language, setLanguage] = useState<SupportedLanguage>("english");
   const [voiceId, setVoiceId] = useState(VOICES[0].id);
   const [latency, setLatency] = useState<number | null>(null);
+  const [energy, setEnergy] = useState(0);
+  const [highContrast, setHighContrast] = useState(false);
   const [notice, setNotice] = useState("Replay mode is ready. No API key is used until you choose Live.");
   const [events, setEvents] = useState<StudioEvent[]>(INITIAL_EVENTS);
   const timers = useRef<ReturnType<typeof setTimeout>[]>([]);
@@ -69,6 +69,7 @@ export function SecondVoiceStudio() {
   const words = useMemo(() => sentence.trim().split(/\s+/).filter(Boolean), [sentence]);
   const progress = words.length === 0 ? 0 : heardCount / words.length;
   const heardText = words.slice(0, heardCount).join(" ");
+  const activeVoice = VOICES.find((voice) => voice.id === voiceId)?.label ?? "Selected voice";
 
   const pushEvent = useCallback((label: string, detail: string, tone: EventTone = "signal") => {
     const elapsed = runStartedAt.current > 0 ? (performance.now() - runStartedAt.current) / 1000 : 0;
@@ -88,12 +89,19 @@ export function SecondVoiceStudio() {
     timers.current = [];
   }, []);
 
+  const closeSession = useCallback(() => {
+    session.current?.close();
+    session.current = null;
+    sessionConfig.current = null;
+    setEnergy(0);
+  }, []);
+
   useEffect(() => {
     return () => {
       clearDemoTimers();
-      session.current?.close();
+      closeSession();
     };
-  }, [clearDemoTimers]);
+  }, [clearDemoTimers, closeSession]);
 
   const animateWords = useCallback(
     (text: string, startDelay = 0, onDone?: () => void, limit?: number) => {
@@ -104,6 +112,7 @@ export function SecondVoiceStudio() {
           () => {
             setActiveWord(index);
             setHeardCount(index + 1);
+            setEnergy(0.34 + ((index * 17) % 5) * 0.1);
             if (index === wordsToAnimate.length - 1) onDone?.();
           },
           startDelay + index * 235,
@@ -123,7 +132,8 @@ export function SecondVoiceStudio() {
     setActiveWord(-1);
     setHeardCount(0);
     setLatency(164);
-    setNotice("Guided replay: the same event contract as Live, without spending credits.");
+    setEnergy(0);
+    setNotice("Guided replay: a deterministic preview of the live interaction, without spending credits.");
     runStartedAt.current = performance.now();
     eventId.current = 1;
     setEvents([{ id: 0, label: "INTENT", detail: "14 words composed from two selections", at: "T+0.00", tone: "signal" }]);
@@ -137,6 +147,7 @@ export function SecondVoiceStudio() {
       }, 720),
       setTimeout(() => {
         setPhase("interrupted");
+        setEnergy(0);
         setHeardCount(7);
         setActiveWord(6);
         setNotice("Interrupted at the heard boundary. Unplayed words were dropped.");
@@ -155,6 +166,7 @@ export function SecondVoiceStudio() {
         pushEvent("RESUME", "same voice · same session", "voice");
         animateWords(REVISED_SENTENCE, 0, () => {
           setPhase("complete");
+          setEnergy(0);
           pushEvent("COMPLETE", "listener received the revised turn", "complete");
         });
       }, 4700),
@@ -165,6 +177,7 @@ export function SecondVoiceStudio() {
     if (phase !== "speaking") return;
     clearDemoTimers();
     session.current?.cancel();
+    setEnergy(0);
     setPhase("interrupted");
     setNotice(`Stopped after “${words[Math.max(0, heardCount - 1)] ?? "the last word"}”. Edit and resume when ready.`);
     pushEvent("CUT", `${heardCount} heard · local audio queue cleared`, "cut");
@@ -184,9 +197,7 @@ export function SecondVoiceStudio() {
     try {
       const nextConfig = `${voiceId}:${language}`;
       if (session.current && sessionConfig.current !== nextConfig) {
-        session.current.close();
-        session.current = null;
-        sessionConfig.current = null;
+        closeSession();
       }
 
       if (!session.current) {
@@ -209,8 +220,10 @@ export function SecondVoiceStudio() {
           onPlaybackComplete: () => {
             setPhase("complete");
             setActiveWord(-1);
+            setEnergy(0);
             pushEvent("COMPLETE", "playback reached the listener", "complete");
           },
+          onEnergy: setEnergy,
           onLatency: (milliseconds) => setLatency(milliseconds),
           onError: (message) => {
             setPhase("error");
@@ -223,12 +236,12 @@ export function SecondVoiceStudio() {
 
       await session.current.connect(voiceId, language);
       setNotice("Live session connected. Audio and word timing are streaming from AssemblyAI.");
-      session.current.speak(sentence.trim());
+      await session.current.speakStreamed(sentence.trim());
     } catch (error) {
       setPhase("error");
       setNotice(error instanceof Error ? error.message : "The live voice session could not start.");
     }
-  }, [clearDemoTimers, language, pushEvent, sentence, voiceId]);
+  }, [clearDemoTimers, closeSession, language, pushEvent, sentence, voiceId]);
 
   const reset = useCallback(() => {
     clearDemoTimers();
@@ -239,26 +252,25 @@ export function SecondVoiceStudio() {
     setActiveWord(-1);
     setHeardCount(0);
     setLatency(null);
+    setEnergy(0);
     setNotice("Ready for another turn.");
     runStartedAt.current = 0;
     eventId.current = 1;
     setEvents(INITIAL_EVENTS);
   }, [clearDemoTimers]);
 
-  const choosePhrase = (phrase: string) => {
+  const choosePhrase = useCallback((phrase: string) => {
     clearDemoTimers();
     setSentence(phrase.endsWith(".") ? phrase : `${phrase}.`);
     setPhase("composing");
     setActiveWord(-1);
     setHeardCount(0);
     setNotice("Phrase selected. Add detail or speak it as written.");
-  };
+  }, [clearDemoTimers]);
 
   const switchLanguage = () => {
     clearDemoTimers();
-    session.current?.close();
-    session.current = null;
-    sessionConfig.current = null;
+    closeSession();
     const next = language === "english" ? "spanish" : "english";
     setLanguage(next);
     setSentence(next === "spanish" ? SPANISH_SENTENCE : REVISED_SENTENCE);
@@ -268,8 +280,24 @@ export function SecondVoiceStudio() {
     setNotice(`Language set to ${next}. TTS language is explicit, never guessed.`);
   };
 
+  useEffect(() => {
+    const handleShortcut = (event: KeyboardEvent) => {
+      const target = event.target as HTMLElement | null;
+      if (target?.matches("textarea, input, select, [contenteditable='true']")) return;
+      const chipIndex = Number(event.key) - 1;
+      if (chipIndex >= 0 && chipIndex < PHRASE_CHIPS.length) {
+        event.preventDefault();
+        choosePhrase(PHRASE_CHIPS[chipIndex]);
+      }
+      if (event.key === "Escape") interrupt();
+      if (event.key.toLowerCase() === "r") runGuidedDemo();
+    };
+    window.addEventListener("keydown", handleShortcut);
+    return () => window.removeEventListener("keydown", handleShortcut);
+  }, [choosePhrase, interrupt, runGuidedDemo]);
+
   return (
-    <div className="studio-shell">
+    <div className={`studio-shell ${highContrast ? "is-high-contrast" : ""}`}>
       <header className="topbar">
         <a className="wordmark" href="#top" aria-label="SecondVoice home">
           <span className="wordmark-mark"><Waves size={19} /></span>
@@ -279,9 +307,19 @@ export function SecondVoiceStudio() {
           <span className={`live-dot live-dot--${phase}`} />
           {PHASE_LABELS[phase]}
         </div>
-        <div className="mode-switch" aria-label="Demo source">
-          <button className={mode === "replay" ? "is-active" : ""} onClick={() => setMode("replay")}>Replay</button>
-          <button className={mode === "live" ? "is-active" : ""} onClick={() => setMode("live")}>Live</button>
+        <div className="topbar-actions">
+          <button
+            className={`contrast-toggle ${highContrast ? "is-active" : ""}`}
+            onClick={() => setHighContrast((current) => !current)}
+            aria-pressed={highContrast}
+            aria-label="Toggle high contrast"
+          >
+            <Contrast size={15} />
+          </button>
+          <div className="mode-switch" aria-label="Demo source">
+            <button className={mode === "replay" ? "is-active" : ""} onClick={() => setMode("replay")}>Replay</button>
+            <button className={mode === "live" ? "is-active" : ""} onClick={() => setMode("live")}>Live</button>
+          </div>
         </div>
       </header>
 
@@ -304,7 +342,7 @@ export function SecondVoiceStudio() {
         </div>
 
         <div className={`sculpture-frame sculpture-frame--${phase}`}>
-          <VoiceSculpture phase={phase} progress={progress} reducedMotion={reduceMotion} />
+          <VoiceSculpture energy={energy} phase={phase} progress={progress} reducedMotion={reduceMotion} />
           <div className="sculpture-label">
             <span>VOICE / MAYA-01</span>
             <strong>{Math.round(progress * 100).toString().padStart(2, "0")}% heard</strong>
@@ -321,9 +359,7 @@ export function SecondVoiceStudio() {
               id="voice"
               value={voiceId}
               onChange={(event) => {
-                session.current?.close();
-                session.current = null;
-                sessionConfig.current = null;
+                closeSession();
                 setVoiceId(event.target.value);
               }}
             >
@@ -352,8 +388,14 @@ export function SecondVoiceStudio() {
             <small>One tap starts the thought</small>
           </div>
           <div className="chip-row">
-            {PHRASE_CHIPS.map((phrase) => (
-              <button key={phrase} className="phrase-chip" onClick={() => choosePhrase(phrase)}>
+            {PHRASE_CHIPS.map((phrase, index) => (
+              <button
+                key={phrase}
+                className="phrase-chip"
+                onClick={() => choosePhrase(phrase)}
+                aria-keyshortcuts={`${index + 1}`}
+                title={`Shortcut: ${index + 1}`}
+              >
                 {phrase}
               </button>
             ))}
@@ -416,48 +458,16 @@ export function SecondVoiceStudio() {
 
           <p className={`system-notice system-notice--${phase}`}>{notice}</p>
 
-          <div className="judge-console">
-            <section className={`listener-view listener-view--${phase}`} aria-label="Listener view">
-              <div className="console-title">
-                <span><BadgeCheck size={15} /> Listener view</span>
-                <small>speaker-controlled</small>
-              </div>
-              <blockquote>
-                {heardText || "The listener sees only words that have reached playback."}
-                {phase === "speaking" ? <span className="listener-cursor" aria-hidden="true" /> : null}
-              </blockquote>
-              <div className="listener-meta">
-                <span>Voice / {VOICES.find((voice) => voice.id === voiceId)?.label}</span>
-                <span>{language}</span>
-                <span>{heardCount}/{words.length} heard</span>
-              </div>
-            </section>
-
-            <section className="event-stream" aria-label="Live voice event stream">
-              <div className="console-title">
-                <span><RadioTower size={15} /> Event stream</span>
-                <small>{mode}</small>
-              </div>
-              <div className="event-list">
-                <AnimatePresence initial={false}>
-                  {events.map((event) => (
-                    <motion.div
-                      layout
-                      initial={{ opacity: 0, x: 10 }}
-                      animate={{ opacity: 1, x: 0 }}
-                      exit={{ opacity: 0, height: 0 }}
-                      className={`event-row event-row--${event.tone}`}
-                      key={event.id}
-                    >
-                      <time>{event.at}</time>
-                      <strong>{event.label}</strong>
-                      <span>{event.detail}</span>
-                    </motion.div>
-                  ))}
-                </AnimatePresence>
-              </div>
-            </section>
-          </div>
+          <JudgeConsole
+            activeVoice={activeVoice}
+            events={events}
+            heardCount={heardCount}
+            heardText={heardText}
+            language={language}
+            mode={mode}
+            phase={phase}
+            totalWords={words.length}
+          />
         </div>
       </section>
 

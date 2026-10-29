@@ -20,6 +20,10 @@ with sync_playwright() as playwright:
     page.wait_for_timeout(1800)
     print(f"initial_console_errors={console_errors}")
     print(f"voice_canvas_count={page.locator('canvas').count()}")
+    assert page.locator(".phrase-chip").count() == 5
+    page.get_by_role("button", name="Toggle high contrast").click()
+    assert "is-high-contrast" in (page.locator(".studio-shell").get_attribute("class") or "")
+    page.get_by_role("button", name="Toggle high contrast").click()
     page.screenshot(path=str(OUTPUT / "secondvoice-desktop.png"), full_page=True)
 
     page.get_by_role("button", name="Run the 90-second demo").click()
@@ -40,6 +44,8 @@ with sync_playwright() as playwright:
 
     page.get_by_role("button", name="Switch to Spanish").click()
     assert "Quiero responder" in page.locator("textarea").input_value()
+    page.keyboard.press("5")
+    assert page.locator("textarea").input_value() == "I am ready to continue."
 
     mobile = browser.new_page(viewport={"width": 390, "height": 844}, device_scale_factor=1)
     mobile.set_default_timeout(10000)

@@ -7,6 +7,7 @@ import * as THREE from "three";
 import type { StudioPhase } from "@/lib/demo";
 
 type VoiceSculptureProps = {
+  energy: number;
   phase: StudioPhase;
   progress: number;
   reducedMotion: boolean;
@@ -21,7 +22,7 @@ const COLOR_BY_PHASE: Record<StudioPhase, string> = {
   error: "#ff335f",
 };
 
-function Sculpture({ phase, progress, reducedMotion }: VoiceSculptureProps) {
+function Sculpture({ energy, phase, progress, reducedMotion }: VoiceSculptureProps) {
   const group = useRef<THREE.Group>(null);
   const core = useRef<THREE.Mesh>(null);
   const targetColor = useMemo(() => new THREE.Color(COLOR_BY_PHASE[phase]), [phase]);
@@ -33,7 +34,7 @@ function Sculpture({ phase, progress, reducedMotion }: VoiceSculptureProps) {
     if (!reducedMotion) {
       group.current.rotation.y += delta * speed;
       group.current.rotation.x = Math.sin(state.clock.elapsedTime * 0.22) * 0.12;
-      const pulse = phase === "speaking" ? 1 + Math.sin(state.clock.elapsedTime * 6) * 0.045 : 1;
+      const pulse = phase === "speaking" ? 1 + energy * 0.13 + Math.sin(state.clock.elapsedTime * 6) * 0.025 : 1;
       core.current.scale.setScalar(pulse);
     }
     const material = core.current.material as THREE.MeshPhysicalMaterial;
@@ -61,16 +62,17 @@ function Sculpture({ phase, progress, reducedMotion }: VoiceSculptureProps) {
         const angle = (index / shards.length) * Math.PI * 2;
         const spoken = index / shards.length <= progress;
         const radius = 1.55 + Math.sin(index * 1.7) * 0.18;
+        const fracture = phase === "interrupted" ? Math.sin(index * 2.43) * 0.34 : 0;
         return (
           <mesh
             key={index}
             position={[
-              Math.cos(angle) * radius,
-              Math.sin(angle * 2) * 0.34,
-              Math.sin(angle) * radius * 0.52,
+              Math.cos(angle) * radius + fracture,
+              Math.sin(angle * 2) * 0.34 + Math.abs(fracture) * 0.45,
+              Math.sin(angle) * radius * 0.52 + fracture * 0.3,
             ]}
             rotation={[angle * 0.15, -angle, angle * 0.35]}
-            scale={[spoken ? 1.18 : 0.72, 1, 1]}
+            scale={[spoken ? 1.18 + energy * 0.32 : 0.72, 1, 1]}
           >
             <boxGeometry args={[0.08, 0.3 + (index % 5) * 0.035, 0.045]} />
             <meshStandardMaterial

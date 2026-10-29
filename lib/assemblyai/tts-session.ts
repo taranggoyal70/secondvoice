@@ -7,6 +7,17 @@ export type TimedWord = {
   confidence: number;
 };
 
+export type TTSClientEventType =
+  | "Audio"
+  | "Begin"
+  | "Cancel"
+  | "Cancelled"
+  | "Error"
+  | "FlushDone"
+  | "Generate"
+  | "Termination"
+  | "WordBoundaries";
+
 type ServerFrame =
   | {
       type: "Begin";
@@ -24,8 +35,9 @@ type SessionCallbacks = {
   onStatus?: (status: "connecting" | "ready" | "speaking" | "cancelled" | "closed") => void;
   onSessionReady?: (sessionId: string, wordBoundaries: boolean) => void;
   onWord?: (word: TimedWord, index: number) => void;
-  onFrame?: (type: string, detail: string) => void;
+  onFrame?: (type: TTSClientEventType, detail: string) => void;
   onPlaybackComplete?: (flushId: number) => void;
+  onEnergy?: (level: number) => void;
   onError?: (message: string) => void;
   onLatency?: (milliseconds: number) => void;
 };
@@ -41,6 +53,7 @@ export class AssemblyAITTSSession {
   private dropAudio = false;
   private requestStartedAt = 0;
   private connected = false;
+  private streamGeneration = 0;
 
   constructor(private callbacks: SessionCallbacks = {}) {}
 
@@ -155,19 +168,33 @@ export class AssemblyAITTSSession {
     });
   }
 
-  speak(text: string) {
+  async speakStreamed(text: string, wordsPerChunk = 3, delayMs = 42) {
     if (!this.socket || this.socket.readyState !== WebSocket.OPEN) {
       throw new Error("The voice session is not connected.");
     }
 
+    const generation = this.streamGeneration + 1;
+    this.streamGeneration = generation;
     this.requestStartedAt = performance.now();
-    this.callbacks.onFrame?.("Generate", "request queued · awaiting audio");
-    this.socket.send(JSON.stringify({ type: "Generate", text }));
+    const words = text.trim().split(/\s+/);
+    const chunkCount = Math.ceil(words.length / wordsPerChunk);
+
+    for (let index = 0; index < words.length; index += wordsPerChunk) {
+      if (generation !== this.streamGeneration) return;
+      const prefix = index === 0 ? "" : " ";
+      const chunk = `${prefix}${words.slice(index, index + wordsPerChunk).join(" ")}`;
+      this.socket.send(JSON.stringify({ type: "Generate", text: chunk }));
+      this.callbacks.onFrame?.("Generate", `partial ${Math.floor(index / wordsPerChunk) + 1}/${chunkCount} · ${chunk.trim()}`);
+      if (index + wordsPerChunk < words.length) await new Promise((resolve) => setTimeout(resolve, delayMs));
+    }
+
+    if (generation !== this.streamGeneration) return;
     this.socket.send(JSON.stringify({ type: "Flush" }));
   }
 
   cancel() {
     if (!this.socket || this.socket.readyState !== WebSocket.OPEN) return;
+    this.streamGeneration += 1;
     this.dropAudio = true;
     this.callbacks.onFrame?.("Cancel", "cancel sent · local queue cleared");
     this.socket.send(JSON.stringify({ type: "Cancel" }));
@@ -175,6 +202,7 @@ export class AssemblyAITTSSession {
   }
 
   close() {
+    this.streamGeneration += 1;
     if (this.socket?.readyState === WebSocket.OPEN) {
       this.socket.send(JSON.stringify({ type: "Terminate" }));
     }
@@ -192,7 +220,18 @@ export class AssemblyAITTSSession {
     const wholeBytes = bytes.byteLength & ~1;
     const samples = new Int16Array(bytes.buffer, bytes.byteOffset, wholeBytes / 2);
     const floats = new Float32Array(samples.length);
-    for (let index = 0; index < samples.length; index += 1) floats[index] = samples[index] / 32768;
+    let energySum = 0;
+    let energySamples = 0;
+    for (let index = 0; index < samples.length; index += 1) {
+      const sample = samples[index] / 32768;
+      floats[index] = sample;
+      if (index % 24 === 0) {
+        energySum += sample * sample;
+        energySamples += 1;
+      }
+    }
+    const rms = energySamples > 0 ? Math.sqrt(energySum / energySamples) : 0;
+    this.callbacks.onEnergy?.(Math.min(1, rms * 5.5));
 
     const buffer = this.audioContext.createBuffer(1, floats.length, this.sampleRate);
     buffer.copyToChannel(floats, 0);

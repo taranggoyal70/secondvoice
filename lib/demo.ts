@@ -14,6 +14,7 @@ export const PHRASE_CHIPS = [
   "Please ask me directly",
   "I want to answer for myself",
   "That is not what I meant",
+  "I am ready to continue",
 ];
 
 export const PHASE_LABELS: Record<StudioPhase, string> = {
