@@ -1,7 +1,6 @@
 "use client";
 
 import { AnimatePresence, motion, useReducedMotion } from "motion/react";
-import dynamic from "next/dynamic";
 import {
   AudioLines,
   CircleStop,
@@ -25,14 +24,7 @@ import {
   type StudioPhase,
 } from "@/lib/demo";
 import { JudgeConsole, type EventTone, type StudioEvent } from "./judge-console";
-
-const VoiceSculpture = dynamic(
-  () => import("./voice-sculpture").then((module) => module.VoiceSculpture),
-  {
-    ssr: false,
-    loading: () => <div className="sculpture-loading">Tuning voice instrument…</div>,
-  },
-);
+import { VoiceTapeDeck } from "./voice-tape-deck";
 
 const VOICES = [
   { id: "aai-audrey", label: "Audrey", tone: "steady · warm" },
@@ -341,14 +333,7 @@ export function SecondVoiceStudio() {
           </div>
         </div>
 
-        <div className={`sculpture-frame sculpture-frame--${phase}`}>
-          <VoiceSculpture energy={energy} phase={phase} progress={progress} reducedMotion={reduceMotion} />
-          <div className="sculpture-label">
-            <span>VOICE / MAYA-01</span>
-            <strong>{Math.round(progress * 100).toString().padStart(2, "0")}% heard</strong>
-          </div>
-          <div className="sculpture-axis" aria-hidden="true"><span /><span /><span /></div>
-        </div>
+        <VoiceTapeDeck energy={energy} phase={phase} progress={progress} reducedMotion={reduceMotion} />
       </section>
 
       <section className="instrument" aria-label="SecondVoice instrument">
