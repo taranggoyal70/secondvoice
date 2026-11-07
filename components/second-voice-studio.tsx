@@ -1,446 +1,216 @@
 "use client";
 
-import { AnimatePresence, motion, useReducedMotion } from "motion/react";
-import {
-  AudioLines,
-  CircleStop,
-  Contrast,
-  Languages,
-  Play,
-  RotateCcw,
-  Waves,
-} from "lucide-react";
-import { useCallback, useEffect, useMemo, useRef, useState } from "react";
+import { ArrowRight, ArrowUpRight, Square, Volume2, RotateCcw, Waves, Contrast } from "lucide-react";
+import { useCallback, useEffect, useRef, useState } from "react";
 import { AssemblyAITTSSession, type SupportedLanguage } from "@/lib/assemblyai/tts-session";
-import {
-  PHASE_LABELS,
-  PHRASE_CHIPS,
-  PRIMARY_SENTENCE,
-  REVISED_SENTENCE,
-  SPANISH_SENTENCE,
-  type StudioPhase,
-} from "@/lib/demo";
-import { JudgeConsole, type EventTone, type StudioEvent } from "./judge-console";
-import { VoiceTerrain } from "./voice-terrain";
+import { PRIMARY_SENTENCE, REVISED_SENTENCE, PHRASE_CHIPS } from "@/lib/demo";
+import originalRecording from "@/public/demo/original.json";
+import revisedRecording from "@/public/demo/revised.json";
 
-const VOICES = [
-  { id: "aai-audrey", label: "Audrey", tone: "steady · warm" },
-  { id: "aai-titus", label: "Titus", tone: "deep · clear" },
-  { id: "aai-yasmin", label: "Yasmin", tone: "expressive · bright" },
-];
-
-type DemoMode = "replay" | "live";
-
-const INITIAL_EVENTS: StudioEvent[] = [
-  { id: 0, label: "READY", detail: "waiting for speaker intent", at: "T+0.00", tone: "neutral" },
-];
+const BEATS = ["Find the words", "Begin speaking", "Change your mind", "Keep your turn"];
+const TITLES = ["Every word belongs to you.", "A thought becomes a voice.", "You can change your mind.", "The conversation continues."];
+type Status = "ready" | "connecting" | "speaking" | "stopped" | "complete" | "error";
+type Entry = { text: string; kind: "stopped" | "complete"; simulated: boolean };
 
 export function SecondVoiceStudio() {
-  const reduceMotion = useReducedMotion() ?? false;
-  const [mode, setMode] = useState<DemoMode>("replay");
-  const [phase, setPhase] = useState<StudioPhase>("idle");
-  const [sentence, setSentence] = useState(PRIMARY_SENTENCE);
-  const [activeWord, setActiveWord] = useState(-1);
-  const [heardCount, setHeardCount] = useState(0);
+  const [mode, setMode] = useState<"story" | "live">("story");
+  const [beat, setBeat] = useState(0);
+  const [status, setStatus] = useState<Status>("ready");
+  const [text, setText] = useState(PRIMARY_SENTENCE);
+  const [heard, setHeard] = useState("");
+  const [voice, setVoice] = useState("aai-audrey");
   const [language, setLanguage] = useState<SupportedLanguage>("english");
-  const [voiceId, setVoiceId] = useState(VOICES[0].id);
   const [latency, setLatency] = useState<number | null>(null);
-  const [energy, setEnergy] = useState(0);
-  const [highContrast, setHighContrast] = useState(false);
-  const [notice, setNotice] = useState("Replay mode is ready. No API key is used until you choose Live.");
-  const [events, setEvents] = useState<StudioEvent[]>(INITIAL_EVENTS);
-  const timers = useRef<ReturnType<typeof setTimeout>[]>([]);
+  const [notice, setNotice] = useState("Explore the four moments below, then try your own message with Live voice.");
+  const [log, setLog] = useState<string[]>([]);
+  const [history, setHistory] = useState<Entry[]>([]);
+  const [contrast, setContrast] = useState(false);
+  const [accessCode, setAccessCode] = useState("");
+  const [needsAccess, setNeedsAccess] = useState(false);
+  const recordedAudio = useRef<HTMLAudioElement | null>(null);
   const session = useRef<AssemblyAITTSSession | null>(null);
-  const sessionConfig = useRef<string | null>(null);
-  const runStartedAt = useRef(0);
-  const eventId = useRef(1);
+  const epoch = useRef(0);
+  const busy = useRef(false);
+  const lastHeard = useRef("");
+  const timers = useRef<ReturnType<typeof setTimeout>[]>([]);
+  const words = text.trim().split(/\s+/).filter(Boolean);
+  const active = status === "connecting" || status === "speaking";
 
-  const words = useMemo(() => sentence.trim().split(/\s+/).filter(Boolean), [sentence]);
-  const progress = words.length === 0 ? 0 : heardCount / words.length;
-  const heardText = words.slice(0, heardCount).join(" ");
-  const activeVoice = VOICES.find((voice) => voice.id === voiceId)?.label ?? "Selected voice";
-
-  const pushEvent = useCallback((label: string, detail: string, tone: EventTone = "signal") => {
-    const elapsed = runStartedAt.current > 0 ? (performance.now() - runStartedAt.current) / 1000 : 0;
-    const event: StudioEvent = {
-      id: eventId.current,
-      label,
-      detail,
-      at: `T+${elapsed.toFixed(2)}`,
-      tone,
-    };
-    eventId.current += 1;
-    setEvents((current) => [event, ...current].slice(0, 6));
-  }, []);
-
-  const clearDemoTimers = useCallback(() => {
+  const dispose = useCallback(() => {
+    epoch.current += 1;
     timers.current.forEach(clearTimeout);
     timers.current = [];
-  }, []);
-
-  const closeSession = useCallback(() => {
+    if (recordedAudio.current) {
+      recordedAudio.current.pause();
+      recordedAudio.current.onended = null;
+      recordedAudio.current.ontimeupdate = null;
+      recordedAudio.current.onplaying = null;
+      recordedAudio.current.onerror = null;
+    }
     session.current?.close();
     session.current = null;
-    sessionConfig.current = null;
-    setEnergy(0);
+    busy.current = false;
   }, []);
+  useEffect(() => () => dispose(), [dispose]);
 
-  useEffect(() => {
-    return () => {
-      clearDemoTimers();
-      closeSession();
-    };
-  }, [clearDemoTimers, closeSession]);
-
-  const animateWords = useCallback(
-    (text: string, startDelay = 0, onDone?: () => void, limit?: number) => {
-      const nextWords = text.trim().split(/\s+/);
-      const wordsToAnimate = nextWords.slice(0, limit ?? nextWords.length);
-      wordsToAnimate.forEach((_, index) => {
-        const timer = setTimeout(
-          () => {
-            setActiveWord(index);
-            setHeardCount(index + 1);
-            setEnergy(0.34 + ((index * 17) % 5) * 0.1);
-            if (index === wordsToAnimate.length - 1) onDone?.();
-          },
-          startDelay + index * 235,
-        );
-        timers.current.push(timer);
-      });
-    },
-    [],
-  );
-
-  const runGuidedDemo = useCallback(() => {
-    clearDemoTimers();
-    setMode("replay");
-    setPhase("composing");
-    setSentence(PRIMARY_SENTENCE);
-    setLanguage("english");
-    setActiveWord(-1);
-    setHeardCount(0);
-    setLatency(164);
-    setEnergy(0);
-    setNotice("Guided replay: a deterministic preview of the live interaction, without spending credits.");
-    runStartedAt.current = performance.now();
-    eventId.current = 1;
-    setEvents([{ id: 0, label: "INTENT", detail: "14 words composed from two selections", at: "T+0.00", tone: "signal" }]);
-
-    timers.current.push(
-      setTimeout(() => {
-        setPhase("speaking");
-        pushEvent("AUDIO", "first byte · 164 ms", "voice");
-        pushEvent("GENERATE", "partial sentence streaming", "signal");
-        animateWords(PRIMARY_SENTENCE, 0, undefined, 7);
-      }, 720),
-      setTimeout(() => {
-        setPhase("interrupted");
-        setEnergy(0);
-        setHeardCount(7);
-        setActiveWord(6);
-        setNotice("Interrupted at the heard boundary. Unplayed words were dropped.");
-        pushEvent("CANCEL", "7 heard · 7 unheard words dropped", "cut");
-      }, 2650),
-      setTimeout(() => {
-        setSentence(REVISED_SENTENCE);
-        setActiveWord(-1);
-        setHeardCount(0);
-        setPhase("composing");
-        pushEvent("REVISE", "speaker changed the intended meaning", "signal");
-      }, 3900),
-      setTimeout(() => {
-        setPhase("speaking");
-        setNotice("Intent revised. The same voice session continues.");
-        pushEvent("RESUME", "same voice · same session", "voice");
-        animateWords(REVISED_SENTENCE, 0, () => {
-          setPhase("complete");
-          setEnergy(0);
-          pushEvent("COMPLETE", "listener received the revised turn", "complete");
-        });
-      }, 4700),
-    );
-  }, [animateWords, clearDemoTimers, pushEvent]);
-
-  const interrupt = useCallback(() => {
-    if (phase !== "speaking") return;
-    clearDemoTimers();
-    session.current?.cancel();
-    setEnergy(0);
-    setPhase("interrupted");
-    setNotice(`Stopped after “${words[Math.max(0, heardCount - 1)] ?? "the last word"}”. Edit and resume when ready.`);
-    pushEvent("CUT", `${heardCount} heard · local audio queue cleared`, "cut");
-  }, [clearDemoTimers, heardCount, phase, pushEvent, words]);
-
-  const speakLive = useCallback(async () => {
-    clearDemoTimers();
-    setMode("live");
-    setPhase("composing");
-    setActiveWord(-1);
-    setHeardCount(0);
-    setNotice("Opening a private, short-lived AssemblyAI voice session…");
-    runStartedAt.current = performance.now();
-    eventId.current = 1;
-    setEvents([{ id: 0, label: "CONNECT", detail: "minting a 60-second browser token", at: "T+0.00", tone: "signal" }]);
-
-    try {
-      const nextConfig = `${voiceId}:${language}`;
-      if (session.current && sessionConfig.current !== nextConfig) {
-        closeSession();
-      }
-
-      if (!session.current) {
-        session.current = new AssemblyAITTSSession({
-          onStatus: (status) => {
-            if (status === "speaking") setPhase("speaking");
-            if (status === "cancelled") setPhase("interrupted");
-          },
-          onSessionReady: (sessionId, wordBoundaries) => {
-            pushEvent("BEGIN", `${sessionId.slice(0, 8)} · timing ${wordBoundaries ? "on" : "off"}`, "signal");
-          },
-          onWord: (_, index) => {
-            setActiveWord(index);
-            setHeardCount(index + 1);
-          },
-          onFrame: (type, detail) => {
-            const tone: EventTone = type === "Cancel" || type === "Cancelled" ? "cut" : type === "Audio" ? "voice" : "signal";
-            pushEvent(type.toUpperCase(), detail, tone);
-          },
-          onPlaybackComplete: () => {
-            setPhase("complete");
-            setActiveWord(-1);
-            setEnergy(0);
-            pushEvent("COMPLETE", "playback reached the listener", "complete");
-          },
-          onEnergy: setEnergy,
-          onLatency: (milliseconds) => setLatency(milliseconds),
-          onError: (message) => {
-            setPhase("error");
-            setNotice(message);
-            pushEvent("ERROR", message, "cut");
-          },
-        });
-        sessionConfig.current = nextConfig;
-      }
-
-      await session.current.connect(voiceId, language);
-      setNotice("Live session connected. Audio and word timing are streaming from AssemblyAI.");
-      await session.current.speakStreamed(sentence.trim());
-    } catch (error) {
-      setPhase("error");
-      setNotice(error instanceof Error ? error.message : "The live voice session could not start.");
+  const story = useCallback((step: number) => {
+    dispose();
+    setMode("story"); setBeat(step); setLatency(null); setLog([]);
+    setVoice("aai-audrey"); setLanguage("english");
+    const phrase = step === 3 ? REVISED_SENTENCE : PRIMARY_SENTENCE;
+    setText(phrase);
+    const preview = "";
+    setHeard(preview); lastHeard.current = preview;
+    setStatus(step === 0 ? "ready" : "connecting");
+    setHistory(step === 3 ? [{ text: "I need a little more time,", kind: "stopped", simulated: true }] : []);
+    setNotice(["Explore this recorded example, or choose Live voice to speak your own message.", "Playing speech recorded from AssemblyAI. Timings follow the audio playback clock.", "This recorded example stops after the first phrase. You can stop live speech at any time.", "Playing the revised message. The earlier turn remains visible."][step]);
+    if (step > 0 && recordedAudio.current) {
+      const id = epoch.current;
+      const audio = recordedAudio.current;
+      const recording = step === 3 ? revisedRecording : originalRecording;
+      const timings = recording.frames.find(frame => frame.type === "WordBoundaries")?.words ?? [];
+      audio.src = step === 3 ? "/demo/revised.wav" : "/demo/original.wav";
+      audio.currentTime = 0;
+      busy.current = true;
+      audio.onplaying = () => { if (id === epoch.current) setStatus("speaking"); };
+      audio.ontimeupdate = () => {
+        if (id !== epoch.current) return;
+        const cutoff = step === 2 ? (timings[5]?.end ?? 1500) : Infinity;
+        const elapsed = Math.min(audio.currentTime * 1000, cutoff);
+        const portion = timings.filter(word => word.end <= elapsed).map(word => word.word).join(" ");
+        lastHeard.current = portion; setHeard(portion);
+        if (audio.currentTime * 1000 >= cutoff) { audio.pause(); busy.current = false; setStatus("stopped"); }
+      };
+      audio.onended = () => { if (id === epoch.current) { busy.current = false; setHeard(phrase); setStatus("complete"); } };
+      audio.onerror = () => { if (id === epoch.current) { busy.current = false; setStatus("error"); setNotice("The recording could not load. Retry or use Live voice."); } };
+      void audio.play().catch(() => { if (id === epoch.current) { busy.current = false; setStatus("ready"); setNotice("Press Play recording to enable audio in this browser."); } });
     }
-  }, [clearDemoTimers, closeSession, language, pushEvent, sentence, voiceId]);
+  }, [dispose]);
 
-  const reset = useCallback(() => {
-    clearDemoTimers();
+  const changeMode = (next: "story" | "live") => {
+    if (next === "story") { story(0); return; }
+    dispose(); setMode(next); setStatus("ready"); setHeard(""); lastHeard.current = ""; setLatency(null);
+    setHistory([]); setLog([]);
+    setNotice(next === "live" ? "Write a message and press Speak. Only your chosen text is sent for synthesis." : "Recorded walkthrough · select a moment to explore.");
+  };
+
+  const stop = useCallback(() => {
+    if (!busy.current && status !== "speaking") return;
+    const received = lastHeard.current;
     session.current?.cancel();
-    setPhase("idle");
-    setSentence(PRIMARY_SENTENCE);
-    setLanguage("english");
-    setActiveWord(-1);
-    setHeardCount(0);
-    setLatency(null);
-    setEnergy(0);
-    setNotice("Ready for another turn.");
-    runStartedAt.current = 0;
-    eventId.current = 1;
-    setEvents(INITIAL_EVENTS);
-  }, [clearDemoTimers]);
+    dispose(); setStatus("stopped");
+    if (received) setHistory(previous => [...previous, { text: received, kind: "stopped", simulated: mode === "story" }]);
+    setNotice("Playback stopped. Word timings are best-effort; the displayed text may not include every word played.");
+  }, [dispose, mode, status]);
 
-  const choosePhrase = useCallback((phrase: string) => {
-    clearDemoTimers();
-    setSentence(phrase.endsWith(".") ? phrase : `${phrase}.`);
-    setPhase("composing");
-    setActiveWord(-1);
-    setHeardCount(0);
-    setNotice("Phrase selected. Add detail or speak it as written.");
-  }, [clearDemoTimers]);
-
-  const switchLanguage = () => {
-    clearDemoTimers();
-    closeSession();
-    const next = language === "english" ? "spanish" : "english";
-    setLanguage(next);
-    setSentence(next === "spanish" ? SPANISH_SENTENCE : REVISED_SENTENCE);
-    setActiveWord(-1);
-    setHeardCount(0);
-    setPhase("composing");
-    setNotice(`Language set to ${next}. TTS language is explicit, never guessed.`);
+  const speak = async () => {
+    if (busy.current || !text.trim()) return;
+    dispose(); busy.current = true;
+    const id = epoch.current;
+    const utterance = text.trim();
+    const current = () => epoch.current === id;
+    setMode("live"); setStatus("connecting"); setHeard(""); lastHeard.current = ""; setLatency(null);
+    setNotice("Connecting to AssemblyAI…");
+    const next = new AssemblyAITTSSession({
+      onStatus: state => { if (current() && state === "speaking") setStatus("speaking"); },
+      onWord: (_, index) => {
+        if (!current()) return;
+        const portion = utterance.split(/\s+/).slice(0, index + 1).join(" ");
+        lastHeard.current = portion; setHeard(portion);
+      },
+      onLatency: value => { if (current()) setLatency(value); },
+      onFrame: (type, detail) => { if (current()) setLog(previous => [...previous.slice(-11), `${type}: ${detail}`]); },
+      onPlaybackComplete: () => {
+        if (!current()) return;
+        setStatus("complete"); setHeard(utterance); lastHeard.current = utterance;
+        setHistory(previous => [...previous, { text: utterance, kind: "complete", simulated: false }]);
+        setNotice("Your message has finished playing.");
+        dispose();
+      },
+      onError: message => { if (current()) { setStatus("error"); setNotice(message); dispose(); } },
+    }, accessCode);
+    session.current = next;
+    try {
+      await next.connect(voice, language);
+      if (!current()) return;
+      setNeedsAccess(false);
+      setNotice("Streaming your message. Press Stop or Escape at any time.");
+      await next.speakStreamed(utterance);
+    } catch (error) {
+      if (!current()) return;
+      setStatus("error"); setNotice(error instanceof Error ? error.message : "Could not start voice playback.");
+      if (error instanceof Error && error.message.includes("access code")) setNeedsAccess(true);
+      dispose();
+    }
   };
 
   useEffect(() => {
-    const handleShortcut = (event: KeyboardEvent) => {
-      const target = event.target as HTMLElement | null;
-      if (target?.matches("textarea, input, select, [contenteditable='true']")) return;
-      const chipIndex = Number(event.key) - 1;
-      if (chipIndex >= 0 && chipIndex < PHRASE_CHIPS.length) {
-        event.preventDefault();
-        choosePhrase(PHRASE_CHIPS[chipIndex]);
-      }
-      if (event.key === "Escape") interrupt();
-      if (event.key.toLowerCase() === "r") runGuidedDemo();
+    const key = (event: KeyboardEvent) => {
+      if (event.key === "Escape") { event.preventDefault(); stop(); return; }
+      if ((event.target as HTMLElement)?.matches("input, textarea, select")) return;
+      if (mode === "story" && event.key === "ArrowRight") { event.preventDefault(); story(Math.min(3, beat + 1)); }
+      if (mode === "story" && event.key === "ArrowLeft") { event.preventDefault(); story(Math.max(0, beat - 1)); }
     };
-    window.addEventListener("keydown", handleShortcut);
-    return () => window.removeEventListener("keydown", handleShortcut);
-  }, [choosePhrase, interrupt, runGuidedDemo]);
+    window.addEventListener("keydown", key);
+    return () => window.removeEventListener("keydown", key);
+  }, [beat, mode, stop, story]);
 
+  const receivedCount = heard ? heard.split(/\s+/).length : 0;
   return (
-    <div className={`studio-shell ${highContrast ? "is-high-contrast" : ""}`}>
-      <header className="topbar">
-        <a className="wordmark" href="#top" aria-label="SecondVoice home">
-          <span className="wordmark-mark"><Waves size={19} /></span>
-          SECONDVOICE
-        </a>
-        <div className="conversation-state">
-          <span className={`live-dot live-dot--${phase}`} />
-          <span>
-            <strong>Maya</strong>
-            <small>{PHASE_LABELS[phase]} · conversation with Alex</small>
-          </span>
-        </div>
-        <div className="topbar-actions">
-          <button
-            className={`contrast-toggle ${highContrast ? "is-active" : ""}`}
-            onClick={() => setHighContrast((current) => !current)}
-            aria-pressed={highContrast}
-            aria-label="Toggle high contrast"
-          >
-            <Contrast size={15} />
-          </button>
-          <div className="mode-switch" aria-label="Demo source">
-            <button className={mode === "replay" ? "is-active" : ""} onClick={() => setMode("replay")}>Replay</button>
-            <button className={mode === "live" ? "is-active" : ""} onClick={() => setMode("live")}>Live</button>
-          </div>
-        </div>
+    <div className={`sheet ${contrast ? "high-contrast" : ""}`}>
+      <audio ref={recordedAudio} preload="none" />
+      <a href="#workspace" className="skip-link">Skip to voice workspace</a>
+      <header className="site-nav">
+        <a className="brand" href="#top"><Waves size={22} strokeWidth={2.5} /> SecondVoice<span className="brand-period">.</span></a>
+        <nav aria-label="Main navigation"><a href="#workspace">Experience</a><a href="#mechanism">How it works</a></nav>
+        <div className="nav-end"><button className="icon-button" aria-label="Toggle high contrast" aria-pressed={contrast} onClick={() => setContrast(!contrast)}><Contrast size={18} /></button><button className="button primary small" onClick={() => { changeMode("live"); document.getElementById("workspace")?.scrollIntoView({ behavior: "smooth" }); }}>Try your voice <ArrowUpRight size={16} /></button></div>
       </header>
 
-      <main className="voice-console" id="top">
-        <aside className="phrase-bank" aria-label="Quick phrases">
-          <div className="panel-heading">
-            <div>
-              <strong>Quick phrases</strong>
-              <span>Press 1–5 or tap</span>
+      <section className="intro" id="top">
+        <div className="intro-kicker"><span className="signal-square" /> A little more time. A voice of your own.</div>
+        <h1><span className="dot-type">A pause.</span><br />Still your turn.</h1>
+        <div className="intro-bottom"><p>For moments when speaking takes more.<br />Find your words, speak them, change your mind.</p><div className="intro-note"><span>ASSEMBLYAI × SECONDVOICE</span><span>An assistive communication prototype</span></div></div>
+        <div className="thread-art" aria-hidden="true"><span /><span /><span /><span /><span /><span /><span /></div>
+      </section>
+
+      <section id="workspace" className="experience">
+        <div className="section-bar"><span className="section-label">01 / THE EXPERIENCE</span><div className="mode-tabs" role="group" aria-label="Experience mode"><button aria-pressed={mode === "story"} onClick={() => changeMode("story")}>Walkthrough</button><button aria-pressed={mode === "live"} onClick={() => changeMode("live")}>Live voice <span className="tiny-dot" /></button></div></div>
+        <div className="experience-heading"><h2>{mode === "story" ? TITLES[beat] : "Say it your way."}</h2><span className="mode-description">{mode === "story" ? "Recorded AssemblyAI audio · no API calls" : "Real synthesis · AssemblyAI"}</span></div>
+        {mode === "story" && <div className="beat-track" aria-label="Walkthrough steps">{BEATS.map((label, i) => <button key={label} aria-current={beat === i ? "step" : undefined} onClick={() => story(i)}><span>{String(i + 1).padStart(2, "0")}</span>{label}<i /></button>)}</div>}
+
+        <div className="conversation-grid">
+          <section className="speaker-pane" aria-labelledby="speaker-title">
+            <div className="pane-heading"><span className="letter-marker">A</span><h3 id="speaker-title">Your words</h3><span>What you want to say.</span></div>
+            <div className="message-paper">
+              <div className="message-person"><span className="person-mark">Y</span><div><strong>You</strong><span>You choose every word.</span></div><span className="draft-label">DRAFT</span></div>
+              <label htmlFor="message">Your message</label>
+              <textarea id="message" disabled={active} readOnly={mode === "story"} value={text} maxLength={1800} onChange={event => { dispose(); setText(event.target.value); setHeard(""); setStatus("ready"); }} />
+              <div className="message-meta"><span>{words.length} words</span><button className="text-button" disabled={active || mode === "story"} onClick={() => { setText(""); setHeard(""); setStatus("ready"); }}>Clear</button></div>
+              <div className="voice-controls"><label>Voice<select aria-label="Voice" disabled={active || mode === "story"} value={voice} onChange={event => setVoice(event.target.value)}><option value="aai-audrey">Audrey</option><option value="aai-titus">Titus</option><option value="aai-yasmin">Yasmin</option></select></label><label>Language<select aria-label="Language" disabled={active || mode === "story"} value={language} onChange={event => setLanguage(event.target.value as SupportedLanguage)}><option value="english">English</option><option value="spanish">Spanish</option></select></label></div>
+              <div className="playback-controls"><button className="button primary" disabled={active || !text.trim()} onClick={mode === "story" ? () => story(beat === 3 ? 3 : 1) : speak}>{mode === "story" ? <ArrowRight size={17} /> : <Volume2 size={17} />}{mode === "story" ? "Play recording" : "Speak message"}</button><button className="button stop-button" disabled={!active} onClick={stop}><Square size={13} fill="currentColor" /> Stop <kbd>esc</kbd></button></div>
             </div>
-            <span className="panel-count">{PHRASE_CHIPS.length}</span>
-          </div>
-          <div className="phrase-keys">
-            {PHRASE_CHIPS.map((phrase, index) => (
-              <button
-                key={phrase}
-                className="phrase-key"
-                onClick={() => choosePhrase(phrase)}
-                aria-keyshortcuts={`${index + 1}`}
-                title={`Shortcut: ${index + 1}`}
-              >
-                <span>{index + 1}</span>
-                <strong>{phrase}</strong>
-              </button>
-            ))}
-          </div>
+            <div className="phrase-list"><span>A place to start</span>{PHRASE_CHIPS.slice(0, 3).map(phrase => <button key={phrase} disabled={active} onClick={() => { dispose(); setMode("live"); setText(`${phrase}.`); setHeard(""); setStatus("ready"); }}>{phrase}<ArrowUpRight size={14} /></button>)}</div>
+          </section>
 
-          <div className="voice-settings">
-            <label htmlFor="voice">Voice</label>
-            <select
-              id="voice"
-              value={voiceId}
-              onChange={(event) => {
-                closeSession();
-                setVoiceId(event.target.value);
-              }}
-            >
-              {VOICES.map((voice) => (
-                <option value={voice.id} key={voice.id}>{voice.label} · {voice.tone}</option>
-              ))}
-            </select>
-            <button className="language-control" onClick={switchLanguage}>
-              <Languages size={18} /> {language === "english" ? "English · switch to Spanish" : "Spanish · switch to English"}
-            </button>
-          </div>
-        </aside>
-
-        <section className="composer-console" aria-label="Compose a message">
-          <div className="workspace-heading">
-            <div>
-              <span>Current turn</span>
-              <h1>What do you want to say?</h1>
+          <section className="listener-pane" aria-labelledby="listener-title">
+            <div className="pane-heading"><span className="letter-marker orange">B</span><h3 id="listener-title">Your voice</h3><span>What reaches the listener.</span></div>
+            <div className={`voice-output is-${status}`}><div className="output-label"><span className="tiny-dot" /> {mode === "story" ? `RECORDING / ${status.toUpperCase()}` : status.toUpperCase()}</div>
+              <div className="spoken-text" aria-live="polite">{heard || <span className="empty-voice">Your next thought<br />starts here<span className="orange-text">.</span></span>}</div>
+              <div className="voice-line" aria-hidden="true">{Array.from({ length: 55 }, (_, i) => <i key={i} style={{ height: `${status === "speaking" ? 8 + Math.abs(Math.sin(i * 1.3)) * 32 : 3}px`, animationDelay: `${i * 25}ms` }} />)}</div>
+              <div className="output-foot"><span>{mode === "story" ? "Recorded word timings" : "Timed words · best effort"}</span><span>{receivedCount.toString().padStart(2, "0")} / {words.length.toString().padStart(2, "0")}</span></div>
             </div>
-            <div className="demo-actions">
-              <button className="button button--demo" onClick={runGuidedDemo}>
-                <Play size={17} fill="currentColor" /> Play judge demo
-              </button>
-              <button className="button button--reset" onClick={reset} aria-label="Reset current turn">
-                <RotateCcw size={18} />
-              </button>
-            </div>
-          </div>
+            {history.length > 0 && <div className="turn-history"><span className="section-label">CONVERSATION RECORD</span>{history.map((entry, i) => <div key={`${i}-${entry.text}`}><span>{entry.kind === "stopped" ? "Interrupted" : "Completed"}{entry.simulated ? " · recorded" : ""}</span><p>{entry.text}</p></div>)}</div>}
+            <div className={`session-note ${status === "error" ? "error" : ""}`} role="status">{notice}</div>
+            {needsAccess && mode === "live" && <label className="access-field">Judge access code<input type="password" autoComplete="off" value={accessCode} onChange={event => setAccessCode(event.target.value)} placeholder="Enter the code from the submission" /><small>Then press Speak message again. The recorded walkthrough is open to everyone.</small></label>}
+            {mode === "live" && <span className="latency">Time to first audio frame: {latency === null ? "not measured" : `${latency} ms`}</span>}
+          </section>
+        </div>
+        <div className="experience-footer"><span>Fig. 1 &nbsp; Your intent stays yours. Playback follows your lead.</span>{mode === "story" && <button className="text-button next-beat" onClick={() => story((beat + 1) % 4)}>{beat === 3 ? "Start again" : "Next moment"}{beat === 3 ? <RotateCcw size={16} /> : <ArrowRight size={16} />}</button>}</div>
+        <details className="technical-details"><summary>Inspect the voice session <span>{mode === "story" ? "Recorded audio" : "Live protocol"}</span></summary><p>AssemblyAI streams audio from your approved text. Word timings can arrive late or be unavailable after cancellation. This view does not measure what another person actually heard.</p><ol>{log.map((item, i) => <li key={i}>{item}</li>)}</ol>{log.length === 0 && <p>No live protocol events yet.</p>}</details>
+      </section>
 
-          <VoiceTerrain energy={energy} phase={phase} progress={progress} reducedMotion={reduceMotion} />
-
-          <div className="composer-surface">
-            <label htmlFor="sentence">Message</label>
-            <textarea
-              id="sentence"
-              value={sentence}
-              onChange={(event) => {
-                clearDemoTimers();
-                setSentence(event.target.value);
-                setActiveWord(-1);
-                setHeardCount(0);
-                setPhase("composing");
-              }}
-              rows={3}
-            />
-
-            <div className="word-timeline" aria-live="polite">
-              <AnimatePresence mode="popLayout">
-                {words.map((word, index) => {
-                  const heard = index < heardCount;
-                  const current = index === activeWord;
-                  return (
-                    <motion.span
-                      layout
-                      key={`${word}-${index}`}
-                      className={`timeline-word ${heard ? "is-heard" : ""} ${current ? "is-current" : ""}`}
-                      initial={{ opacity: 0, y: 8 }}
-                      animate={{ opacity: 1, y: 0 }}
-                      exit={{ opacity: 0, y: -6 }}
-                    >
-                      {word}
-                    </motion.span>
-                  );
-                })}
-              </AnimatePresence>
-              {phase === "interrupted" ? <span className="interrupt-mark">CUT</span> : null}
-            </div>
-
-            <div className="transport-row">
-              <button className="button button--live" onClick={speakLive} disabled={!sentence.trim() || phase === "speaking"}>
-                <AudioLines size={20} /> Speak this message
-              </button>
-              <button className="button button--interrupt" onClick={interrupt} disabled={phase !== "speaking"}>
-                <CircleStop size={20} /> Stop speaking
-              </button>
-              <span className="latency-readout">First audio {latency ? `${latency} ms` : "—"}</span>
-            </div>
-
-            <p className={`system-notice system-notice--${phase}`}>{notice}</p>
-          </div>
-        </section>
-
-        <aside className="partner-console" aria-label="Listener and service view">
-          <JudgeConsole
-            activeVoice={activeVoice}
-            events={events}
-            heardCount={heardCount}
-            heardText={heardText}
-            language={language}
-            mode={mode}
-            phase={phase}
-            totalWords={words.length}
-          />
-        </aside>
-      </main>
+      <section className="mechanism" id="mechanism"><span className="section-label">02 / THE PRINCIPLE</span><h2>Speaking is more than<br />pressing play.</h2><div className="mechanism-copy"><p>A conversation has pauses, corrections, and second thoughts. Your voice should leave room for all three.</p><p>Choose a phrase. Make it yours. Stop when you need to. SecondVoice puts those decisions within reach.</p><span className="prototype-note">Prototype scope: typed input, stock voices, streaming playback and interruption. No medical efficacy claims.</span></div></section>
+      <footer><span className="brand">SecondVoice.</span><span>Made for the person speaking.</span><a href="https://www.assemblyai.com/docs/tts/getting-started/quickstart" target="_blank" rel="noreferrer">Powered by AssemblyAI <ArrowUpRight size={14} /></a></footer>
     </div>
   );
 }

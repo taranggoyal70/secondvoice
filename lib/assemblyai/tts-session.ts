@@ -54,22 +54,26 @@ export class AssemblyAITTSSession {
   private requestStartedAt = 0;
   private connected = false;
   private streamGeneration = 0;
+  private disposed = false;
+  private responseDelivered = false;
 
-  constructor(private callbacks: SessionCallbacks = {}) {}
+  constructor(private callbacks: SessionCallbacks = {}, private accessCode = "") {}
 
   async connect(voiceId: string, language: SupportedLanguage) {
+    if (this.disposed) throw new Error("This voice session has ended.");
     if (this.socket?.readyState === WebSocket.OPEN) return;
 
+    this.audioContext ??= new AudioContext({ sampleRate: 24000 });
+    await this.audioContext.resume();
     this.callbacks.onStatus?.("connecting");
-    const tokenResponse = await fetch("/api/tts/token", { cache: "no-store" });
+    const tokenResponse = await fetch("/api/tts/token", { method: "POST", headers: { "X-Demo-Access": this.accessCode }, cache: "no-store", signal: AbortSignal.timeout(12000) });
     const tokenPayload = (await tokenResponse.json()) as { token?: string; error?: string; action?: string };
 
     if (!tokenResponse.ok || !tokenPayload.token) {
       throw new Error(tokenPayload.action ?? tokenPayload.error ?? "Could not create a temporary TTS token.");
     }
 
-    this.audioContext ??= new AudioContext({ sampleRate: 24000 });
-    await this.audioContext.resume();
+    if (this.disposed) throw new Error("Voice connection cancelled.");
 
     const params = new URLSearchParams({
       voice_id: voiceId,
@@ -84,8 +88,12 @@ export class AssemblyAITTSSession {
       const socket = new WebSocket(`wss://tts.us.assemblyai.com/v1/ws?${params}`);
       this.socket = socket;
       let handshakeSettled = false;
+      const timeout = setTimeout(() => {
+        if (!handshakeSettled) { reject(new Error("Voice connection timed out. Please retry.")); socket.close(); }
+      }, 12000);
 
       socket.onmessage = (event) => {
+        if (this.disposed) return;
         let frame: ServerFrame;
         try {
           frame = JSON.parse(event.data as string) as ServerFrame;
@@ -98,6 +106,7 @@ export class AssemblyAITTSSession {
           this.sampleRate = frame.configuration.sample_rate;
           this.connected = true;
           handshakeSettled = true;
+          clearTimeout(timeout);
           this.callbacks.onStatus?.("ready");
           this.callbacks.onSessionReady?.(frame.id, frame.configuration.word_boundaries);
           this.callbacks.onFrame?.("Begin", `session ${frame.id.slice(0, 8)} · ${this.sampleRate / 1000} kHz`);
@@ -125,6 +134,7 @@ export class AssemblyAITTSSession {
         }
 
         if (frame.type === "FlushDone") {
+          this.responseDelivered = true;
           this.callbacks.onFrame?.("FlushDone", `${frame.audio_duration_ms} ms audio · request ${frame.flush_id}`);
           this.schedulePlaybackComplete(frame.flush_id);
           return;
@@ -138,10 +148,11 @@ export class AssemblyAITTSSession {
         }
 
         if (frame.type === "Error") {
+          clearTimeout(timeout);
+          handshakeSettled = true;
           const message = `${frame.error_type}: ${frame.error}`;
           this.callbacks.onError?.(message);
           this.callbacks.onFrame?.("Error", message);
-          handshakeSettled = true;
           reject(new Error(message));
           return;
         }
@@ -154,11 +165,18 @@ export class AssemblyAITTSSession {
       };
 
       socket.onerror = () => {
+        clearTimeout(timeout);
         handshakeSettled = true;
+        if (!this.disposed) this.callbacks.onError?.("Voice connection failed. Please retry.");
         reject(new Error("The AssemblyAI TTS connection could not be opened."));
       };
       socket.onclose = () => {
+        clearTimeout(timeout);
         this.connected = false;
+        if (!this.disposed && handshakeSettled && !this.responseDelivered) {
+          this.callbacks.onError?.("Voice connection closed. Please retry.");
+          this.clearPlayback();
+        }
         this.callbacks.onStatus?.("closed");
         if (!handshakeSettled) {
           handshakeSettled = true;
@@ -168,7 +186,7 @@ export class AssemblyAITTSSession {
     });
   }
 
-  async speakStreamed(text: string, wordsPerChunk = 3, delayMs = 42) {
+  async speakStreamed(text: string) {
     if (!this.socket || this.socket.readyState !== WebSocket.OPEN) {
       throw new Error("The voice session is not connected.");
     }
@@ -176,17 +194,10 @@ export class AssemblyAITTSSession {
     const generation = this.streamGeneration + 1;
     this.streamGeneration = generation;
     this.requestStartedAt = performance.now();
-    const words = text.trim().split(/\s+/);
-    const chunkCount = Math.ceil(words.length / wordsPerChunk);
-
-    for (let index = 0; index < words.length; index += wordsPerChunk) {
-      if (generation !== this.streamGeneration) return;
-      const prefix = index === 0 ? "" : " ";
-      const chunk = `${prefix}${words.slice(index, index + wordsPerChunk).join(" ")}`;
-      this.socket.send(JSON.stringify({ type: "Generate", text: chunk }));
-      this.callbacks.onFrame?.("Generate", `partial ${Math.floor(index / wordsPerChunk) + 1}/${chunkCount} · ${chunk.trim()}`);
-      if (index + wordsPerChunk < words.length) await new Promise((resolve) => setTimeout(resolve, delayMs));
-    }
+    this.responseDelivered = false;
+    if (!text.trim() || [...text].length > 1800) throw new Error("Enter a message between 1 and 1800 characters.");
+    this.socket.send(JSON.stringify({ type: "Generate", text }));
+    this.callbacks.onFrame?.("Generate", `approved message · ${text.length} characters`);
 
     if (generation !== this.streamGeneration) return;
     this.socket.send(JSON.stringify({ type: "Flush" }));
@@ -202,12 +213,12 @@ export class AssemblyAITTSSession {
   }
 
   close() {
+    this.disposed = true;
     this.streamGeneration += 1;
-    if (this.socket?.readyState === WebSocket.OPEN) {
-      this.socket.send(JSON.stringify({ type: "Terminate" }));
-    }
+    this.socket?.close();
     this.connected = false;
     this.clearPlayback();
+    if (this.audioContext && this.audioContext.state !== "closed") void this.audioContext.close();
   }
 
   private scheduleAudio(frame: Extract<ServerFrame, { type: "Audio" }>) {
@@ -231,7 +242,6 @@ export class AssemblyAITTSSession {
       }
     }
     const rms = energySamples > 0 ? Math.sqrt(energySum / energySamples) : 0;
-    this.callbacks.onEnergy?.(Math.min(1, rms * 5.5));
 
     const buffer = this.audioContext.createBuffer(1, floats.length, this.sampleRate);
     buffer.copyToChannel(floats, 0);
@@ -243,6 +253,7 @@ export class AssemblyAITTSSession {
     const startAt = Math.max(this.nextPlayAt, this.audioContext.currentTime + 0.035);
     if (!this.anchors.has(frame.flush_id)) this.anchors.set(frame.flush_id, startAt);
     source.start(startAt);
+    this.atPlaybackTime(startAt, () => this.callbacks.onEnergy?.(Math.min(1, rms * 5.5)));
     this.nextPlayAt = startAt + buffer.duration;
     this.sources.add(source);
     source.onended = () => this.sources.delete(source);
@@ -255,24 +266,27 @@ export class AssemblyAITTSSession {
 
     frame.words.forEach((word, index) => {
       if (word.start === word.end) return;
-      const at = anchor + (word.start - frame.audio_start_ms) / 1000;
-      const delay = Math.max(0, (at - this.audioContext!.currentTime) * 1000);
-      const timer = setTimeout(() => {
-        this.callbacks.onWord?.(word, index);
-        this.timers.delete(timer);
-      }, delay);
-      this.timers.add(timer);
+      const at = anchor + (word.end - frame.audio_start_ms) / 1000;
+      this.atPlaybackTime(at, () => this.callbacks.onWord?.(word, index));
     });
   }
 
   private schedulePlaybackComplete(flushId: number) {
     if (!this.audioContext) return;
-    const delay = Math.max(0, (this.nextPlayAt - this.audioContext.currentTime) * 1000);
-    const timer = setTimeout(() => {
-      if (!this.dropAudio && this.connected) this.callbacks.onPlaybackComplete?.(flushId);
-      this.timers.delete(timer);
-    }, delay + 24);
-    this.timers.add(timer);
+    this.atPlaybackTime(this.nextPlayAt, () => {
+      if (!this.dropAudio && !this.disposed) this.callbacks.onPlaybackComplete?.(flushId);
+    });
+  }
+
+  private atPlaybackTime(at: number, callback: () => void) {
+    const tick = () => {
+      if (this.disposed || this.dropAudio || !this.audioContext) return;
+      const remaining = (at - this.audioContext.currentTime) * 1000;
+      if (remaining <= 0 && this.audioContext.state === "running") { callback(); return; }
+      const timer = setTimeout(() => { this.timers.delete(timer); tick(); }, Math.min(50, Math.max(10, remaining)));
+      this.timers.add(timer);
+    };
+    tick();
   }
 
   private clearPlayback() {

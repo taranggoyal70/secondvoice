@@ -1,48 +1,64 @@
 # SecondVoice
 
-A consent-first, real-time voice prosthesis that helps people losing speech communicate in a voice that still feels like theirs.
+**A pause. Still your turn.** An assistive communication prototype that lets the speaker compose a message, stream it as speech, stop playback, and revise their next turn.
 
-SecondVoice is a solo build for the AssemblyAI TTS Hackathon. The demo makes streaming speech visible: generated words begin translucent, become solid when heard, and remain visibly unplayed when the speaker interrupts.
+[Try SecondVoice](https://secondvoice-green.vercel.app/) · [Watch the recorded walkthrough](https://secondvoice-green.vercel.app/demo/walkthrough.mp4)
+
+## Try it
+
+The public walkthrough plays real AssemblyAI recordings with saved word timings. Select its four moments to hear the original message, a mid-phrase stop, and the revision. It makes no API calls.
+
+Choose **Live voice** to synthesize your own message. Judges receive an access code separately. Enter it when prompted, then press Speak message again. Press Stop or Escape to cancel; revise and speak again. Language selects synthesis language, not translation.
 
 ## Run locally
 
-```bash
-npm install
+Requires Node.js 24 and npm.
+
+```sh
+npm ci
 cp .env.example .env.local
-npm run dev
+npm run dev -- -p 4174
 ```
 
-Open [http://localhost:3000](http://localhost:3000). Replay mode works without credentials.
+Set `ASSEMBLYAI_API_KEY` in the ignored local file. On Vercel, configure both that variable and `DEMO_ACCESS_CODE` as sensitive production environment variables. Never place the provider key in the frontend or repository.
 
-For Live mode, rotate any key that has been exposed and set the replacement only in `.env.local`:
+## Architecture
 
-```bash
-ASSEMBLYAI_API_KEY=your_rotated_key
+```text
+Approved text → browser TTS client → AssemblyAI WebSocket
+                       ↑                    ↓
+Server token route → temporary token     PCM audio + word timings
+                                            ↓
+                                   Web Audio playback → listener view
 ```
 
-Never commit `.env.local` or place the permanent key in browser code. The app mints a 60-second TTS token through `/api/tts/token` and opens the browser WebSocket with that temporary credential.
+The server mints tokens with POST, a 30-second connection window, a 60-second session cap, and other AssemblyAI products disabled. Production live access is protected by a judge code and cross-origin token requests are refused. A shared code is a hackathon access control, not a full identity or global rate-limit system.
 
-## Current demo slice
+The client sends approved text in Generate/Flush frames, schedules PCM buffers, maps word ends to the playback clock, and clears buffers on Stop. Cancellation during connection setup invalidates the pending session. Late frames cannot resurrect a disposed session. The conversation record stays in memory and disappears on reload.
 
-- authored responsive voice-instrument UI;
-- guided compose → speak → interrupt → revise replay;
-- real temporary-token route;
-- live AssemblyAI TTS WebSocket transport with partial-text `Generate` frames;
-- streamed PCM playback;
-- `Cancel` handling that drops queued browser audio;
-- best-effort `WordBoundaries` scheduling;
-- real audio-energy input to a live spectral voice terrain;
-- English and Spanish session configuration;
-- live listener/event evidence console;
-- reduced-motion, high-contrast, keyboard shortcuts, and keyboard-visible focus.
+## Verification — November 7, 2026
 
-## Project notes
+```sh
+npm run lint
+npm test
+npm run build
+node --env-file=.env.local scripts/verify-provider.mjs
+node --env-file=.env.local scripts/verify-cancel.mjs
+```
 
-- [Winning concept](docs/strategy/winning-concept.md)
-- [Visual system](docs/design/visual-system.md)
-- [Competitor and hackathon research](docs/research/competitor-and-hackathon-research.md)
-- [Creative alternative](docs/strategy/creative-alternative-echostage.md)
+- Real provider English synthesis: 4.16 seconds of 24 kHz PCM, word timings received, 91 ms to first frame in one direct test.
+- Spanish synthesis: 5.20 seconds, word timings received, 159 ms to first frame in one direct test.
+- Cancel acknowledged in 362 ms; a revised request succeeded on the same WebSocket with a new flush ID.
+- Chrome: complete English playback, interrupted longer utterance, revised turn, and Spanish playback verified.
+- Production Chrome: authorized live synthesis completed with a measured 103 ms first audio frame on that request.
+- Production checks: public page/audio 200, unauthorized token request 401, authorized token request 200, cross-origin request 403.
 
-## Safety position
+These are individual observations, not latency guarantees or statistical benchmarks. First-frame timing excludes connection setup and is not time to audible sound. Word timing is best-effort and cannot establish what a human listener heard.
 
-This is an accessibility communication prototype, not a medical device. Public demos must use an AssemblyAI catalog voice or an adult's voice cloned with explicit consent.
+## Scope and attribution
+
+Built solo by Tarang Goyal for the AssemblyAI TTS Hackathon. Next.js, React, TypeScript, Web Audio, and AssemblyAI TTS. The video uses actual deployed interface captures and real provider audio; it is a recorded walkthrough, not an uninterrupted live capture.
+
+This prototype uses stock voices and user-approved text. It does not include voice cloning, an LLM planner, speech recognition, or a multi-agent system. No clinical effectiveness is claimed.
+
+Design inspiration: [Continuity](https://github.com/aiden-guan/continuity), particularly its warm paper, typography, thin rules, and staged input/evidence presentation. Implementation and product copy are original; no Continuity code or assets were incorporated.

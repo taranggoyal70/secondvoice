@@ -6,3 +6,5 @@ npm-debug.log*
 *.tsbuildinfo
 .DS_Store
 artifacts/
+.vercel/
+.vercel

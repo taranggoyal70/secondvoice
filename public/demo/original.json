@@ -1,0 +1,120 @@
+{
+  "text": "I need a little more time, but I want to answer this in my own words.",
+  "language": "english",
+  "voice": "aai-audrey",
+  "sampleRate": 24000,
+  "firstAudioMs": 91,
+  "audioBytes": 199680,
+  "durationMs": 4160,
+  "wordTimingReceived": true,
+  "frames": [
+    {
+      "type": "FlushDone",
+      "flush_id": 0,
+      "audio_duration_ms": 4160
+    },
+    {
+      "type": "WordBoundaries",
+      "flush_id": 0,
+      "audio_start_ms": 0,
+      "words": [
+        {
+          "word": "I",
+          "start": 293,
+          "end": 309,
+          "confidence": 0.9247103929519653
+        },
+        {
+          "word": "need",
+          "start": 375,
+          "end": 538,
+          "confidence": 0.8867307901382446
+        },
+        {
+          "word": "a",
+          "start": 587,
+          "end": 603,
+          "confidence": 0.1919560730457306
+        },
+        {
+          "word": "little",
+          "start": 668,
+          "end": 864,
+          "confidence": 0.9768068790435791
+        },
+        {
+          "word": "more",
+          "start": 864,
+          "end": 1027,
+          "confidence": 0.6543906927108765
+        },
+        {
+          "word": "time,",
+          "start": 1093,
+          "end": 1451,
+          "confidence": 0.9649302363395691
+        },
+        {
+          "word": "but",
+          "start": 1827,
+          "end": 1925,
+          "confidence": 0.936518669128418
+        },
+        {
+          "word": "I",
+          "start": 1973,
+          "end": 1990,
+          "confidence": 0.9578080177307129
+        },
+        {
+          "word": "want",
+          "start": 2055,
+          "end": 2202,
+          "confidence": 0.7333768606185913
+        },
+        {
+          "word": "to",
+          "start": 2234,
+          "end": 2332,
+          "confidence": 0.5008059144020081
+        },
+        {
+          "word": "answer",
+          "start": 2398,
+          "end": 2659,
+          "confidence": 0.4918850064277649
+        },
+        {
+          "word": "this",
+          "start": 2724,
+          "end": 2838,
+          "confidence": 0.8926578760147095
+        },
+        {
+          "word": "in",
+          "start": 2969,
+          "end": 3001,
+          "confidence": 0.6739301085472107
+        },
+        {
+          "word": "my",
+          "start": 3050,
+          "end": 3132,
+          "confidence": 0.9900035262107849
+        },
+        {
+          "word": "own",
+          "start": 3279,
+          "end": 3328,
+          "confidence": 0.8766230344772339
+        },
+        {
+          "word": "words.",
+          "start": 3458,
+          "end": 3801,
+          "confidence": 0.8901896476745605
+        }
+      ]
+    }
+  ]
+}
