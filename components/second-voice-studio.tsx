@@ -25,8 +25,6 @@ export function SecondVoiceStudio() {
   const [log, setLog] = useState<string[]>([]);
   const [history, setHistory] = useState<Entry[]>([]);
   const [contrast, setContrast] = useState(false);
-  const [accessCode, setAccessCode] = useState("");
-  const [needsAccess, setNeedsAccess] = useState(false);
   const recordedAudio = useRef<HTMLAudioElement | null>(null);
   const session = useRef<AssemblyAITTSSession | null>(null);
   const epoch = useRef(0);
@@ -128,18 +126,16 @@ export function SecondVoiceStudio() {
         dispose();
       },
       onError: message => { if (current()) { setStatus("error"); setNotice(message); dispose(); } },
-    }, accessCode);
+    });
     session.current = next;
     try {
       await next.connect(voice, language);
       if (!current()) return;
-      setNeedsAccess(false);
       setNotice("Streaming your message. Press Stop or Escape at any time.");
       await next.speakStreamed(utterance);
     } catch (error) {
       if (!current()) return;
       setStatus("error"); setNotice(error instanceof Error ? error.message : "Could not start voice playback.");
-      if (error instanceof Error && error.message.includes("access code")) setNeedsAccess(true);
       dispose();
     }
   };
@@ -201,7 +197,6 @@ export function SecondVoiceStudio() {
             </div>
             {history.length > 0 && <div className="turn-history"><span className="section-label">CONVERSATION RECORD</span>{history.map((entry, i) => <div key={`${i}-${entry.text}`}><span>{entry.kind === "stopped" ? "Interrupted" : "Completed"}{entry.simulated ? " · recorded" : ""}</span><p>{entry.text}</p></div>)}</div>}
             <div className={`session-note ${status === "error" ? "error" : ""}`} role="status">{notice}</div>
-            {needsAccess && mode === "live" && <label className="access-field">Judge access code<input type="password" autoComplete="off" value={accessCode} onChange={event => setAccessCode(event.target.value)} placeholder="Enter the code from the submission" /><small>Then press Speak message again. The recorded walkthrough is open to everyone.</small></label>}
             {mode === "live" && <span className="latency">Time to first audio frame: {latency === null ? "not measured" : `${latency} ms`}</span>}
           </section>
         </div>

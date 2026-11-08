@@ -57,7 +57,7 @@ export class AssemblyAITTSSession {
   private disposed = false;
   private responseDelivered = false;
 
-  constructor(private callbacks: SessionCallbacks = {}, private accessCode = "") {}
+  constructor(private callbacks: SessionCallbacks = {}) {}
 
   async connect(voiceId: string, language: SupportedLanguage) {
     if (this.disposed) throw new Error("This voice session has ended.");
@@ -66,7 +66,7 @@ export class AssemblyAITTSSession {
     this.audioContext ??= new AudioContext({ sampleRate: 24000 });
     await this.audioContext.resume();
     this.callbacks.onStatus?.("connecting");
-    const tokenResponse = await fetch("/api/tts/token", { method: "POST", headers: { "X-Demo-Access": this.accessCode }, cache: "no-store", signal: AbortSignal.timeout(12000) });
+    const tokenResponse = await fetch("/api/tts/token", { method: "POST", cache: "no-store", signal: AbortSignal.timeout(12000) });
     const tokenPayload = (await tokenResponse.json()) as { token?: string; error?: string; action?: string };
 
     if (!tokenResponse.ok || !tokenPayload.token) {

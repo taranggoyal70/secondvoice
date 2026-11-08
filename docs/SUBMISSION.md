@@ -33,7 +33,7 @@ Live English and Spanish synthesis, interruption, revision, and the production a
 - Video: https://secondvoice-green.vercel.app/demo/walkthrough.mp4
 
 ## Judge instructions
-Use the public Walkthrough first: Begin speaking, Change your mind, Keep your turn. It plays recorded AssemblyAI audio. For an actual API call, select Live voice and use the separately supplied judge code. Type a sentence, press Speak message, stop during playback, edit, and speak again. The judge code is deliberately not in this public source file.
+Use the public Walkthrough first: Begin speaking, Change your mind, Keep your turn. It plays recorded AssemblyAI audio. For an actual API call, select Live voice with no sign in or access code. Type a sentence, press Speak message, stop during playback, edit, and speak again. Public sessions have a shared hourly allowance.
 
 ## Submission form
 https://forms.gle/XCW2RdZGbarVLnKEA

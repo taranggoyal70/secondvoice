@@ -1,17 +1,25 @@
 import { NextResponse } from "next/server";
-import { timingSafeEqual } from "node:crypto";
+import { checkRateLimit } from "@vercel/firewall";
 
 export const runtime = "nodejs";
 
 export async function POST(request: Request) {
   const origin = request.headers.get("origin");
   if (origin && origin !== new URL(request.url).origin) return NextResponse.json({ error: "Cross-origin token requests are not allowed." }, { status: 403 });
-  const code = process.env.DEMO_ACCESS_CODE;
-  if (process.env.VERCEL && !code) return NextResponse.json({ error: "Live demo access is not configured. Recorded audio remains available." }, { status: 503 });
-  if (code) {
-    const supplied = Buffer.from(request.headers.get("x-demo-access") ?? "");
-    const expected = Buffer.from(code);
-    if (supplied.length !== expected.length || !timingSafeEqual(supplied, expected)) return NextResponse.json({ error: "Enter the judge access code to use live voice." }, { status: 401 });
+  if (process.env.VERCEL) {
+    try {
+      // A shared bucket limits public issuance across visitors. Vercel counts per region.
+      const limit = await checkRateLimit("secondvoice-public-sessions", {
+        request, rateLimitKey: "secondvoice-public", timeout: 3000,
+      });
+      if (limit.error) throw new Error("Voice allowance could not be checked.");
+      if (limit.rateLimited) return NextResponse.json(
+        { error: "The shared live demo allowance is used for this hour. Please try again later, or explore the recorded walkthrough." },
+        { status: 429, headers: { "Retry-After": "3600", "Cache-Control": "no-store" } },
+      );
+    } catch {
+      return NextResponse.json({ error: "Live voice is temporarily unavailable. Please retry shortly. The recorded walkthrough is still available." }, { status: 503 });
+    }
   }
   const apiKey = process.env.ASSEMBLYAI_API_KEY;
 
