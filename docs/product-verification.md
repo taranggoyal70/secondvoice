@@ -39,3 +39,11 @@ Production deployment `dpl_BRsWranA1XUqiQcfBKotKqzZPC2e` reached READY at `https
 `node scripts/verify-deployment.mjs` confirmed public page 200, public short-lived token issuance 200, cross-origin request 403, and the real recording available as WAV. No token value was printed or saved in the verification report.
 
 In the production browser, the landing phrase link opened `/speak?starter=more-time` with the expected editable phrase and no automatic speech. Clicking Speak completed real synthesis and displayed six of six words with a Completed record. The production tab's browser error/warning log was empty.
+
+## Visual redesign — November 10, 2026
+
+The product presentation now uses a bright violet-and-ink identity, a full-width dark recorded speech stage, feature illustrations built in code, and a separate communication workspace with larger controls. The speech ribbon starts and settles with recorded playback state; it is a visual indicator, not a measured audio spectrum. Scroll entrances run once and honor reduced-motion CSS. The live workspace retains its provider-derived energy bars.
+
+Browser checks covered desktop, measured 390px and 320px CSS widths, larger text, high contrast, modal listener presentation, real synthesis completion, and Escape cancellation while preserving a separate next draft. The narrow navigation button was adjusted after inspection. Neither tested width had horizontal document overflow; overflowing waveform bars are clipped within their own visual container. The browser error/warning log was empty.
+
+The README screenshots and silent stop/revise GIF were recaptured from the final production build. The social image kit was refreshed to match. Existing playback, phrase, and origin tests still pass (10), along with lint and the production build. Reduced-motion behavior remains source-reviewed rather than OS-emulated.

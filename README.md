@@ -4,7 +4,7 @@
 
 # SecondVoice
 
-### A pause. Still your turn.
+### A voice for what you mean.
 
 For moments when speaking takes more. Find your words, speak them aloud, and change your mind.
 
@@ -15,7 +15,7 @@ Built solo by [Tarang Goyal](https://github.com/taranggoyal70).
 
 <br />
 
-<a href="https://secondvoice-green.vercel.app"><img src="assets/readme/landing.png" width="100%" alt="SecondVoice’s landing page: A pause. Still your turn, alongside its interactive recorded speech example" /></a>
+<a href="https://secondvoice-green.vercel.app"><img src="assets/readme/landing.png" width="100%" alt="SecondVoice’s redesigned landing page: A voice for what you mean, with a dark interactive speech stage" /></a>
 
 <sub>No account. No microphone. You choose every word.</sub>
 
@@ -178,7 +178,7 @@ tests/                       Playback, lifecycle, phrases and origin checks
 
 SecondVoice is an **assistive communication prototype**, built solo with AI-assisted development. It is not a clinically validated AAC system, emergency communication service, or substitute for an individually assessed communication aid. It uses typed input and stock voices; it does not include voice cloning, automatic rewriting, speech recognition, or an agent system.
 
-Built with **Next.js, React, TypeScript, Web Audio, and AssemblyAI TTS**. The warm editorial presentation takes inspiration from [Continuity](https://github.com/aiden-guan/continuity). SecondVoice’s interface, copy, and implementation are its own. No Continuity source or assets were incorporated.
+Built with **Next.js, React, TypeScript, Web Audio, and AssemblyAI TTS**. The focus on interactive product storytelling takes inspiration from [Continuity](https://github.com/aiden-guan/continuity). SecondVoice’s interface, copy, and implementation are its own. No Continuity source or assets were incorporated.
 
 <div align="center">
 <br />
