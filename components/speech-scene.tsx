@@ -9,6 +9,10 @@ import {
   Volume2,
 } from "lucide-react";
 import { changedWordIndexes, wordFlightIndexes } from "@/lib/speech-motion";
+import {
+  VoiceSculpture,
+  type SculptureStyle,
+} from "@/components/voice-sculpture";
 import { VoiceRibbon } from "@/components/voice-ribbon";
 
 type Phase =
@@ -20,6 +24,7 @@ type Props = {
   phase: Phase;
   run: number;
   compact?: boolean;
+  sculpture?: SculptureStyle | "calm";
   sourceElement?: RefObject<HTMLTextAreaElement | null>;
 };
 
@@ -30,6 +35,7 @@ export function SpeechScene({
   phase,
   run,
   compact = false,
+  sculpture = "calm",
   sourceElement,
 }: Props) {
   const root = useRef<HTMLDivElement>(null);
@@ -89,6 +95,7 @@ export function SpeechScene({
     }
     if (
       phase !== "speaking" ||
+      (!compact && sculpture === "calm") ||
       document.hidden ||
       window.matchMedia("(prefers-reduced-motion: reduce)").matches
     ) {
@@ -154,7 +161,16 @@ export function SpeechScene({
       animation.onfinish = remove;
       animation.oncancel = remove;
     });
-  }, [run, played, phase, words, sourceElement, stopFlights]);
+  }, [
+    run,
+    played,
+    phase,
+    words,
+    sourceElement,
+    stopFlights,
+    compact,
+    sculpture,
+  ]);
 
   return (
     <div
@@ -162,6 +178,7 @@ export function SpeechScene({
       className={`speech-scene ${compact ? "compact-scene" : ""}`}
       data-phase={phase}
       data-revised={revised}
+      data-calm={!compact && sculpture === "calm"}
     >
       {!compact && (
         <div className="source-document" key={`source-${run}`}>
@@ -269,8 +286,21 @@ export function SpeechScene({
             </span>
           )}
         </p>
-        <div className="speech-track">
-          <VoiceRibbon active={phase === "speaking"} />
+        <div
+          className={`speech-track ${!compact && sculpture !== "calm" ? "sculpture-track" : ""}`}
+        >
+          {!compact && sculpture !== "calm" ? (
+            <VoiceSculpture
+              style={sculpture}
+              phase={phase}
+              heard={played}
+              text={text}
+              run={run}
+              revised={revised}
+            />
+          ) : (
+            <VoiceRibbon active={phase === "speaking"} />
+          )}
           <span className="speech-cut" aria-hidden="true">
             Ⅱ
           </span>

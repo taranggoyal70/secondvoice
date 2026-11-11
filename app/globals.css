@@ -2982,3 +2982,89 @@ select {
 .speech-word.changed-word.has-played {
   color: #ecd6ff;
 }
+.speech-track.sculpture-track {
+  height: 178px;
+  margin: -9px 0 3px;
+}
+.voice-sculpture {
+  width: 100%;
+  height: 178px;
+  display: block;
+}
+.sculpture-track .speech-cut {
+  display: none;
+}
+.sculpture-picker {
+  display: flex;
+  align-items: center;
+  gap: 4px;
+  margin-left: auto;
+  flex-wrap: wrap;
+}
+.sculpture-picker > span {
+  font-size: 10px;
+  color: #afa3bd;
+  margin-right: 6px;
+}
+.sculpture-picker > button {
+  border: 1px solid #ffffff20;
+  border-radius: 5px;
+  padding: 7px 8px;
+  min-height: 44px;
+  background: transparent;
+  color: #c9bdd7;
+  font-size: 12px;
+}
+.sculpture-picker > button[aria-pressed="true"] {
+  background: #d6c5ea;
+  color: #32213f;
+  border-color: #d6c5ea;
+}
+.sculpture-picker > button:hover {
+  border-color: #d6c5ea;
+}
+.choreography-actions {
+  flex-wrap: wrap;
+}
+.choreography-actions > p {
+  flex: 1;
+  min-width: 180px;
+}
+@media (max-width: 1000px) {
+  .sculpture-picker {
+    width: 100%;
+    margin-left: 0;
+    padding-top: 12px;
+    border-top: 1px solid #ffffff1a;
+  }
+  .sculpture-picker > button {
+    min-height: 44px;
+    flex: 1;
+  }
+  .speech-track.sculpture-track,
+  .voice-sculpture {
+    height: 160px;
+  }
+}
+@media (max-width: 480px) {
+  .speech-track.sculpture-track,
+  .voice-sculpture {
+    height: 150px;
+  }
+  .sculpture-picker > button {
+    font-size: 12px;
+  }
+  .choreography-actions > p {
+    width: 100%;
+    flex-basis: 100%;
+  }
+}
+.speech-scene[data-calm="true"] .voice-ribbon path {
+  animation: none !important;
+  transform: scaleY(0.2);
+}
+.speech-scene[data-calm="true"] .source-document,
+.speech-scene[data-calm="true"] .revised-word,
+.speech-scene[data-calm="true"] .halt-stamp {
+  animation: none !important;
+}

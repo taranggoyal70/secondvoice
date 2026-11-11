@@ -1,6 +1,7 @@
 "use client";
 import { useCallback, useEffect, useRef, useState } from "react";
 import { ArrowRight, Play, RotateCcw, Square, Volume2 } from "lucide-react";
+import type { SculptureStyle } from "@/components/voice-sculpture";
 import { SpeechScene } from "@/components/speech-scene";
 import { PRIMARY_SENTENCE, REVISED_SENTENCE } from "@/lib/demo";
 import original from "@/public/demo/original.json";
@@ -8,6 +9,7 @@ import revised from "@/public/demo/revised.json";
 
 export function RecordedDemo() {
   const [step, setStep] = useState(0);
+  const [sculpture, setSculpture] = useState<SculptureStyle | "calm">("orbit");
   const [phase, setPhase] = useState<
     "ready" | "connecting" | "speaking" | "stopped" | "complete" | "error"
   >("ready");
@@ -174,6 +176,7 @@ export function RecordedDemo() {
           heard={heard}
           phase={phase}
           run={run}
+          sculpture={sculpture}
         />
       </div>
       <div className="choreography-actions">
@@ -191,11 +194,22 @@ export function RecordedDemo() {
           {active ? "Stop playback" : heard ? "Play again" : "Let it speak"}
         </button>
         <p role="status">{notice}</p>
-        <span className="demo-sound-note">
-          Your click starts the sound.
-          <br />
-          Your next click can stop it.
-        </span>
+        <div
+          className="sculpture-picker"
+          role="group"
+          aria-label="Visual motion style"
+        >
+          <span>Motion</span>
+          {(["orbit", "ribbon", "bloom", "calm"] as const).map((style) => (
+            <button
+              key={style}
+              aria-pressed={sculpture === style}
+              onClick={() => setSculpture(style)}
+            >
+              {style[0].toUpperCase() + style.slice(1)}
+            </button>
+          ))}
+        </div>
       </div>
     </div>
   );
