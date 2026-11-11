@@ -17,7 +17,7 @@ Built solo by [Tarang Goyal](https://github.com/taranggoyal70).
 
 <a href="https://secondvoice-green.vercel.app"><img src="assets/readme/landing.png" width="100%" alt="SecondVoice’s redesigned landing page: A voice for what you mean, with a dark interactive speech stage" /></a>
 
-<sub>No account. No microphone. You choose every word.</sub>
+<sub>No account. Optional listening. You choose what gets spoken.</sub>
 
 </div>
 
@@ -89,6 +89,19 @@ Once the workspace is open, this view does not need a synthesis request. If the 
 
 [See the phone layout with larger text and high contrast](assets/readme/mobile.png).
 
+## Listen. Choose. Speak.
+
+Optional conversation assistance hears one question, prepares three possible replies, and speaks only the reply you choose. Edit a suggestion before speaking or keep using the original writing workspace.
+
+- **Listening:** explicit consent checkbox and browser microphone permission; AssemblyAI streaming transcription. Stops after one turn, on cancel, when the tab is hidden, or after 30 seconds.
+- **Suggestions:** AssemblyAI LLM Gateway generates short options in English or Spanish. Replies are possibilities, not inferred preferences. Invalid output fails closed; you can always type your own.
+- **One-tap speech:** the chosen reply goes directly to the existing Peter speech pipeline, preserving Stop, revision and conversation history.
+- **Recorded question:** an explicitly labeled recording runs through the same real transcription and suggestion APIs, with the microphone off.
+
+Audio and questions are sent to AssemblyAI when these features are used. This app does not persist transcripts or suggestions. Provider data practices still apply. All AI routes share the public demo allowance. Generated replies can be wrong; review them before choosing Speak.
+
+This is a prototype. Real microphone quality and everyday accessibility still need testing with intended users on their own devices.
+
 ## Behind the voice
 
 ```mermaid
@@ -148,7 +161,7 @@ npm test
 npm run build
 ```
 
-**14 automated checks** cover cancellation during token creation, late frames after closure, suspended playback clocks, cancelling queued audio, approved-message submission, phrase validation and limits, production/development origin rules, exact-token revision matching, and bounded word-flight bursts. Recording checks verify every preview’s audio format and timing, and ensure both Peter demos match their displayed text.
+**18 automated checks** cover cancellation during token creation, late frames after closure, suspended playback clocks, cancelling queued audio, approved-message submission, phrase validation and limits, production/development origin rules, exact-token revision matching, and bounded word-flight bursts. Recording checks verify every preview’s audio format and timing, and ensure both Peter demos match their displayed text.
 
 Browser verification for this version covered:
 
