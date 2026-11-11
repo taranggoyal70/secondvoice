@@ -1,14 +1,18 @@
 "use client";
 import { useCallback, useEffect, useRef, useState } from "react";
 import { ArrowRight, Play, RotateCcw, Square, Volume2 } from "lucide-react";
-import { VoiceRibbon } from "@/components/voice-ribbon";
+import { SpeechScene } from "@/components/speech-scene";
 import { PRIMARY_SENTENCE, REVISED_SENTENCE } from "@/lib/demo";
 import original from "@/public/demo/original.json";
 import revised from "@/public/demo/revised.json";
 
 export function RecordedDemo() {
   const [step, setStep] = useState(0);
-  const [playing, setPlaying] = useState(false);
+  const [phase, setPhase] = useState<
+    "ready" | "connecting" | "speaking" | "stopped" | "complete" | "error"
+  >("ready");
+  const [run, setRun] = useState(0);
+  const active = phase === "connecting" || phase === "speaking";
   const [heard, setHeard] = useState(0);
   const [notice, setNotice] = useState(
     "Real AssemblyAI recording. Sound starts when you press play.",
@@ -17,7 +21,7 @@ export function RecordedDemo() {
   const card = useRef<HTMLDivElement>(null);
   const generation = useRef(0);
   const phrase = step === 2 ? REVISED_SENTENCE : PRIMARY_SENTENCE;
-  const words = phrase.split(/\s+/);
+
   const cleanup = useCallback(() => {
     generation.current++;
     if (!audio.current) return;
@@ -32,7 +36,7 @@ export function RecordedDemo() {
     const pause = () => {
       if (!player || player.paused) return;
       cleanup();
-      setPlaying(false);
+      setPhase("stopped");
       setNotice("Paused. Press play whenever you’re ready.");
     };
     const key = (event: KeyboardEvent) => {
@@ -61,7 +65,8 @@ export function RecordedDemo() {
     const current = generation.current;
     setStep(next);
     setHeard(0);
-    setPlaying(true);
+    setPhase("connecting");
+    setRun((value) => value + 1);
     setNotice(
       next === 1
         ? "Listen as playback stops mid-thought."
@@ -84,14 +89,17 @@ export function RecordedDemo() {
       );
       if (player.currentTime * 1000 >= cutoff) {
         cleanup();
-        setPlaying(false);
+        setPhase("stopped");
         setNotice("Stopped. There is room to change your mind.");
       }
+    };
+    player.onplaying = () => {
+      if (generation.current === current) setPhase("speaking");
     };
     player.ontimeupdate = update;
     player.onended = () => {
       if (generation.current === current) {
-        setPlaying(false);
+        setPhase("complete");
         setHeard(
           (next === 2 ? REVISED_SENTENCE : PRIMARY_SENTENCE).split(/\s+/)
             .length,
@@ -102,135 +110,93 @@ export function RecordedDemo() {
     player.onerror = () => {
       if (generation.current === current) {
         cleanup();
-        setPlaying(false);
+        setPhase("error");
         setNotice("The recording could not load. Press play to retry.");
       }
     };
     void player.play().catch(() => {
       if (generation.current === current) {
         cleanup();
-        setPlaying(false);
+        setPhase("error");
         setNotice("Audio could not start. Press play to try again.");
       }
     });
   };
   const stop = () => {
     cleanup();
-    setPlaying(false);
+    setPhase("stopped");
     setNotice("Stopped by you. Press play to listen again.");
   };
   return (
-    <div ref={card} className={`demo-card ${playing ? "is-speaking" : ""}`}>
+    <div ref={card} className="demo-card choreography-demo">
       <audio ref={audio} preload="none" />
       <div className="demo-top">
         <span>
-          <Volume2 size={18} /> THE SECONDVOICE EXPERIENCE
+          <Volume2 size={18} /> FROM WORDS TO VOICE
         </span>
         <span>
           <i className="status-dot" /> Real recorded speech
         </span>
       </div>
-      <div className="demo-body">
-        <div className="demo-direction">
-          <span className="demo-count">0{step + 1} / 03</span>
+      <div className="choreography-toolbar">
+        <div>
+          <span className="choreography-kicker">
+            ONE THOUGHT. ALWAYS YOURS.
+          </span>
           <h2>
             {
               [
-                <>
-                  A thought
-                  <br />
-                  becomes a voice.
-                </>,
-                <>
-                  You can
-                  <br />
-                  change your mind.
-                </>,
-                <>
-                  The next words
-                  <br />
-                  are still yours.
-                </>,
+                "Let the words leave the page.",
+                "Stop the voice. Keep your thought.",
+                "A second thought, made visible.",
               ][step]
             }
           </h2>
-          <p>
-            {
-              [
-                "Hear a message chosen by the speaker.",
-                "Listen as the message stops mid-thought.",
-                "A fresh thought. Ready to be heard.",
-              ][step]
-            }
-          </p>
-          <div className="demo-chapters" aria-label="Recorded example chapters">
-            {["Speak", "Interrupt", "Revise"].map((label, i) => (
-              <button
-                key={label}
-                aria-pressed={step === i}
-                onClick={() => play(i)}
-              >
-                <span>0{i + 1}</span>
-                {label}
-                <ArrowRight size={17} />
-              </button>
-            ))}
-          </div>
         </div>
-        <div className="demo-reading">
-          <div className="demo-reading-label">
-            <span>THE SPEAKER’S WORDS</span>
-            <span>
-              {playing
-                ? "Playing"
-                : heard >= words.length
-                  ? "Complete"
-                  : heard
-                    ? "Stopped"
-                    : "Ready"}
-            </span>
-          </div>
-          <div className="demo-quote" aria-label={phrase}>
-            {words.map((word, i) => (
-              <span
-                aria-hidden="true"
-                key={`${step}-${i}`}
-                className={i < heard ? "word-spoken" : ""}
-              >
-                {word}{" "}
-              </span>
-            ))}
-          </div>
-          <VoiceRibbon active={playing} />
-          <div className="demo-playback">
+        <div className="chapter-switch" aria-label="Recorded example chapters">
+          {["Speak", "Interrupt", "Revise"].map((label, i) => (
             <button
-              className="button primary"
-              onClick={playing ? stop : () => play()}
+              key={label}
+              onClick={() => play(i)}
+              aria-pressed={step === i}
             >
-              {playing ? (
-                <Square size={16} fill="currentColor" />
-              ) : heard > 0 ? (
-                <RotateCcw size={19} />
-              ) : (
-                <Play size={17} fill="currentColor" />
-              )}
-              {playing
-                ? "Stop playback"
-                : heard > 0
-                  ? "Play again"
-                  : "Listen to the example"}
+              <span>0{i + 1}</span>
+              {label}
+              <ArrowRight size={15} />
             </button>
-            <span>
-              Sound on your terms.
-              <br />
-              <strong>Press play to listen.</strong>
-            </span>
-          </div>
+          ))}
         </div>
       </div>
-      <p className="demo-notice" role="status">
-        {notice}
-      </p>
+      <div className="choreography-stage">
+        <SpeechScene
+          text={phrase}
+          previousText={step === 2 ? PRIMARY_SENTENCE : ""}
+          heard={heard}
+          phase={phase}
+          run={run}
+        />
+      </div>
+      <div className="choreography-actions">
+        <button
+          className="button primary"
+          onClick={active ? stop : () => play()}
+        >
+          {active ? (
+            <Square size={16} fill="currentColor" />
+          ) : heard ? (
+            <RotateCcw size={18} />
+          ) : (
+            <Play size={17} fill="currentColor" />
+          )}
+          {active ? "Stop playback" : heard ? "Play again" : "Let it speak"}
+        </button>
+        <p role="status">{notice}</p>
+        <span className="demo-sound-note">
+          Your click starts the sound.
+          <br />
+          Your next click can stop it.
+        </span>
+      </div>
     </div>
   );
 }

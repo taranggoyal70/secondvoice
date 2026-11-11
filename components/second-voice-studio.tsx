@@ -26,6 +26,7 @@ import {
   useState,
   useSyncExternalStore,
 } from "react";
+import { SpeechScene } from "@/components/speech-scene";
 import { Brand } from "@/components/brand";
 import {
   AssemblyAITTSSession,
@@ -87,6 +88,8 @@ export function SecondVoiceStudio({
 }) {
   const [text, setText] = useState(initialMessage);
   const [utterance, setUtterance] = useState("");
+  const [previousMessage, setPreviousMessage] = useState("");
+  const [speechRun, setSpeechRun] = useState(0);
   const [heard, setHeard] = useState("");
   const [status, setStatus] = useState<Status>("ready");
   const [voice, setVoice] = useState("aai-audrey");
@@ -100,7 +103,7 @@ export function SecondVoiceStudio({
   const [latency, setLatency] = useState<number | null>(null);
   const [events, setEvents] = useState<string[]>([]);
   const [displayText, setDisplayText] = useState("");
-  const [energy, setEnergy] = useState(0);
+
   const [phraseNotice, setPhraseNotice] = useState("");
   const [clearedDraft, setClearedDraft] = useState<string | null>(null);
   const session = useRef<AssemblyAITTSSession | null>(null);
@@ -108,6 +111,7 @@ export function SecondVoiceStudio({
   const busy = useRef(false);
   const lastPlayed = useRef("");
   const currentMessage = useRef("");
+  const revisionBase = useRef("");
   const entryId = useRef(0);
   const editor = useRef<HTMLTextAreaElement>(null);
   const listener = useRef<HTMLDialogElement>(null);
@@ -141,10 +145,11 @@ export function SecondVoiceStudio({
     if (!busy.current) return;
     const played = lastPlayed.current;
     const message = currentMessage.current;
+    revisionBase.current = message;
     session.current?.cancel();
     dispose();
     setStatus("stopped");
-    setEnergy(0);
+
     if (message)
       setHistory((items) => [
         ...items.slice(-19),
@@ -167,13 +172,16 @@ export function SecondVoiceStudio({
     busy.current = true;
     const id = generation.current;
     const current = () => generation.current === id;
+    setPreviousMessage(revisionBase.current);
+    revisionBase.current = "";
+    setSpeechRun((value) => value + 1);
     currentMessage.current = approved;
     lastPlayed.current = "";
     setUtterance(approved);
     setHeard("");
     setLatency(null);
     setEvents([]);
-    setEnergy(0);
+
     setStatus("connecting");
     setNotice("Getting your voice ready. You can stop at any time.");
     const next = new AssemblyAITTSSession({
@@ -194,9 +202,7 @@ export function SecondVoiceStudio({
         lastPlayed.current = portion;
         setHeard(portion);
       },
-      onEnergy: (value) => {
-        if (current()) setEnergy(value);
-      },
+
       onLatency: (value) => {
         if (current()) setLatency(value);
       },
@@ -218,14 +224,14 @@ export function SecondVoiceStudio({
           },
         ]);
         setStatus("complete");
-        setEnergy(0);
+
         setNotice("Message finished. Take your time with the next one.");
         dispose();
       },
       onError: (message) => {
         if (current()) {
           setStatus("error");
-          setEnergy(0);
+
           setNotice(message);
           dispose();
         }
@@ -238,7 +244,7 @@ export function SecondVoiceStudio({
     } catch (error) {
       if (current()) {
         setStatus("error");
-        setEnergy(0);
+
         setNotice(
           error instanceof Error
             ? error.message
@@ -273,7 +279,8 @@ export function SecondVoiceStudio({
     return () => window.removeEventListener("pagehide", leaving);
   }, [stop]);
 
-  function selectPhrase(phrase: string) {
+  function selectPhrase(phrase: string, revising = false) {
+    revisionBase.current = revising ? phrase : "";
     setText(phrase);
     setClearedDraft(null);
     if (!active) {
@@ -310,9 +317,6 @@ export function SecondVoiceStudio({
     listener.current?.showModal();
   }
   const progressWords = heard.trim() ? heard.trim().split(/\s+/).length : 0;
-  const totalWords = utterance.trim()
-    ? utterance.trim().split(/\s+/).length
-    : 0;
 
   return (
     <main
@@ -582,74 +586,19 @@ export function SecondVoiceStudio({
               <span>At your pace</span>
             </div>
             <div className={`output-card is-${status}`}>
-              <div className="output-status">
-                <span>
-                  <i className="status-dot" />
-                  {
-                    {
-                      ready: "READY WHEN YOU ARE",
-                      connecting: "GETTING YOUR VOICE READY",
-                      speaking: "SPEAKING",
-                      stopped: "STOPPED BY YOU",
-                      complete: "MESSAGE COMPLETE",
-                      error: "VOICE NEEDS ATTENTION",
-                    }[status]
-                  }
-                </span>
-                {status === "complete" && <Check size={17} />}
-              </div>
-              <div className="output-words" aria-label="Playback text">
-                {utterance ? (
-                  <p>
-                    {utterance.split(/\s+/).map((word, i) => (
-                      <span
-                        key={`${utterance}-${i}`}
-                        className={
-                          i < progressWords ? "word-spoken" : "word-waiting"
-                        }
-                      >
-                        {word}{" "}
-                      </span>
-                    ))}
-                  </p>
-                ) : (
-                  <p className="output-empty">
-                    Ready when
-                    <br />
-                    <em>you are.</em>
-                    <span>
-                      Write a message to begin.
-                      <br />
-                      Press Speak to hear your words.
-                    </span>
-                  </p>
-                )}
-              </div>
-              <div className="live-signal" aria-hidden="true">
-                {Array.from({ length: 48 }, (_, i) => (
-                  <i
-                    key={i}
-                    style={{
-                      height: `${status === "speaking" ? 6 + Math.abs(Math.sin(i * 0.71)) * (12 + energy * 42) : 3}px`,
-                    }}
-                  />
-                ))}
-              </div>
-              <div className="output-footer">
-                <span>
-                  {status === "stopped"
-                    ? "Stopped. You decide what comes next."
-                    : "Word highlights follow playback timing."}
-                </span>
-                <span>
-                  {String(progressWords).padStart(2, "0")}
-                  <i> / {String(totalWords).padStart(2, "0")}</i>
-                </span>
-              </div>
+              <SpeechScene
+                text={utterance}
+                previousText={previousMessage}
+                heard={progressWords}
+                phase={status}
+                run={speechRun}
+                compact
+                sourceElement={text.trim() === utterance ? editor : undefined}
+              />
               {status === "stopped" && (
                 <button
                   className="text-button revise-button"
-                  onClick={() => selectPhrase(utterance)}
+                  onClick={() => selectPhrase(utterance, true)}
                 >
                   <RotateCcw size={15} />
                   Revise this message
