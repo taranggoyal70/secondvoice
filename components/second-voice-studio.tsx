@@ -430,6 +430,7 @@ export function SecondVoiceStudio({
           ref={conversation}
           language={language}
           disabled={active}
+          speakingText={utterance}
           onStart={stop}
           onStop={stop}
           onSpeak={(reply) => void speak(reply)}

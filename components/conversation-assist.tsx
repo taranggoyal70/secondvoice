@@ -9,13 +9,14 @@ type Props = {
   ref?: Ref<ConversationHandle>;
   language: "english" | "spanish";
   disabled: boolean;
+  speakingText: string;
   onStart: () => void;
   onStop: () => void;
   onSpeak: (text: string) => void;
   onEdit: (text: string) => void;
 };
 
-export function ConversationAssist({ ref, language, disabled, onStart, onStop, onSpeak, onEdit }: Props) {
+export function ConversationAssist({ ref, language, disabled, speakingText, onStart, onStop, onSpeak, onEdit }: Props) {
   const [consent, setConsent] = useState(false);
   const [question, setQuestion] = useState("");
   const [replies, setReplies] = useState<string[]>([]);
@@ -123,7 +124,7 @@ export function ConversationAssist({ ref, language, disabled, onStart, onStop, o
           </div>)}</div> : <div className="replies-empty"><span>{phase === "thinking" ? "Finding the words…" : "A few ways to answer."}</span><p>{phase === "thinking" ? "You’ll choose what sounds like you." : "Listen to a question, or try the recorded example. You can always write your own."}</p></div>}
         </div>
       </div>
-      <p className="conversation-notice" role="status">{disabled && chosen ? `Speaking your choice: “${chosen}”` : notice}</p>
+      <p className="conversation-notice" role="status">{disabled ? `Speaking your message: “${speakingText}”` : notice}</p>
     </section>
   );
 }
