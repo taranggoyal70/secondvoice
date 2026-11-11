@@ -162,7 +162,7 @@ npm test
 npm run build
 ```
 
-**19 automated checks** cover cancellation during token creation, late frames after closure, suspended playback clocks, cancelling queued audio, approved-message submission, phrase validation and limits, production/development origin rules, exact-token revision matching, and bounded word-flight bursts. Recording checks verify every preview’s audio format and timing, and ensure both Peter demos match their displayed text.
+**21 automated checks** cover cancellation during token creation, the full listening-setup deadline and late microphone permission, late frames after closure, suspended playback clocks, cancelling queued audio, approved-message submission, phrase validation and limits, production/development origin rules, exact-token revision matching, and bounded word-flight bursts. Recording checks verify every preview’s audio format and timing, and ensure both Peter demos match their displayed text.
 
 Browser verification for this version covered:
 

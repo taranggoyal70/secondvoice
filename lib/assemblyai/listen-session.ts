@@ -23,6 +23,7 @@ export class ListenSession {
   async start(recordedQuestion = false) {
     try {
       if (this.closed) return;
+      this.timeout = setTimeout(() => this.fail("Listening has stopped after 30 seconds. Try again or type the question."), 30000);
       if (!recordedQuestion) {
         const stream = await navigator.mediaDevices.getUserMedia({ audio: { echoCancellation: true, noiseSuppression: true, channelCount: 1 } });
         if (this.closed) { stream.getTracks().forEach(track => track.stop()); return; }
@@ -48,7 +49,6 @@ export class ListenSession {
       const query = new URLSearchParams({ token: data.token, sample_rate: String(context.sampleRate), encoding: "pcm_s16le", speech_model: "universal-streaming-multilingual" });
       const socket = new WebSocket(`wss://streaming.assemblyai.com/v3/ws?${query}`);
       this.socket = socket;
-      this.timeout = setTimeout(() => this.fail("No complete question arrived. Listening has stopped; try again or type it."), 30000);
       await new Promise<void>((resolve, reject) => {
         this.rejectConnection = reject;
         socket.onmessage = event => {
