@@ -28,6 +28,7 @@ import {
 } from "react";
 import { SpeechScene } from "@/components/speech-scene";
 import { Brand } from "@/components/brand";
+import { DEFAULT_ENGLISH_VOICE, VOICES } from "@/lib/voices";
 import {
   AssemblyAITTSSession,
   type SupportedLanguage,
@@ -49,14 +50,6 @@ type Entry = {
   kind: "stopped" | "complete";
 };
 const STARTERS = STARTER_PHRASES.map((phrase) => phrase.text);
-const VOICES = {
-  english: [
-    { id: "aai-audrey", name: "Audrey" },
-    { id: "aai-titus", name: "Titus" },
-    { id: "aai-yasmin", name: "Yasmin" },
-  ],
-  spanish: [{ id: "aai-constanza", name: "Constanza" }],
-};
 const subscribePhrases = (callback: () => void) => {
   window.addEventListener("storage", callback);
   window.addEventListener("secondvoice:phrases", callback);
@@ -92,7 +85,7 @@ export function SecondVoiceStudio({
   const [speechRun, setSpeechRun] = useState(0);
   const [heard, setHeard] = useState("");
   const [status, setStatus] = useState<Status>("ready");
-  const [voice, setVoice] = useState("aai-audrey");
+  const [voice, setVoice] = useState(DEFAULT_ENGLISH_VOICE);
   const [language, setLanguage] = useState<SupportedLanguage>("english");
   const [notice, setNotice] = useState(
     "Write a thought, or choose a phrase to make your own.",
@@ -103,6 +96,10 @@ export function SecondVoiceStudio({
   const [latency, setLatency] = useState<number | null>(null);
   const [events, setEvents] = useState<string[]>([]);
   const [displayText, setDisplayText] = useState("");
+  const [previewing, setPreviewing] = useState(false);
+  const [previewError, setPreviewError] = useState("");
+  const previewAudio = useRef<HTMLAudioElement>(null);
+  const previewGeneration = useRef(0);
 
   const [phraseNotice, setPhraseNotice] = useState("");
   const [clearedDraft, setClearedDraft] = useState<string | null>(null);
@@ -127,6 +124,7 @@ export function SecondVoiceStudio({
     () => true,
   );
   const active = status === "connecting" || status === "speaking";
+  const selectedVoice = VOICES[language].find((item) => item.id === voice)!;
   const wordCount = text.trim() ? text.trim().split(/\s+/).length : 0;
   const hasText = Boolean(text.trim());
   const isSaved = saved.some(
@@ -141,7 +139,56 @@ export function SecondVoiceStudio({
   }, []);
   useEffect(() => () => dispose(), [dispose]);
 
+  const disposePreview = useCallback(() => {
+    previewGeneration.current++;
+    const player = previewAudio.current;
+    if (!player) return;
+    player.pause();
+    player.onended = null;
+    player.onerror = null;
+  }, []);
+  useEffect(() => {
+    const player = previewAudio.current;
+    const previewVersion = previewGeneration;
+    return () => {
+      previewVersion.current++;
+      if (player) {
+        player.pause();
+        player.onended = null;
+        player.onerror = null;
+      }
+    };
+  }, []);
+  const stopPreview = useCallback(() => {
+    disposePreview();
+    setPreviewing(false);
+    setPreviewError("");
+  }, [disposePreview]);
+  async function previewVoice() {
+    if (active) return;
+    if (previewing) { stopPreview(); return; }
+    stopPreview();
+    const player = previewAudio.current;
+    if (!player) return;
+    const id = previewGeneration.current;
+    const failed = () => {
+      if (previewGeneration.current !== id) return;
+      disposePreview();
+      setPreviewing(false);
+      setPreviewError("Sample couldn’t load. Try preview again.");
+    };
+    player.src = selectedVoice.preview;
+    player.currentTime = 0;
+    player.onended = () => {
+      if (previewGeneration.current === id) stopPreview();
+    };
+    player.onerror = failed;
+    setPreviewing(true);
+    try { await player.play(); } catch { failed(); }
+  }
+
   const stop = useCallback(() => {
+    stopPreview();
     if (!busy.current) return;
     const played = lastPlayed.current;
     const message = currentMessage.current;
@@ -158,11 +205,12 @@ export function SecondVoiceStudio({
     setNotice(
       "Stopped. Your draft is still here. Edit it and speak when you’re ready.",
     );
-  }, [dispose]);
+  }, [dispose, stopPreview]);
 
   const speak = useCallback(async () => {
     const approved = text.trim();
     if (busy.current || !approved || approved.length > MAX_MESSAGE) return;
+    stopPreview();
     if (!navigator.onLine) {
       setNotice("You’re offline. You can still show your message on screen.");
       setStatus("error");
@@ -253,7 +301,7 @@ export function SecondVoiceStudio({
         dispose();
       }
     }
-  }, [dispose, language, text, voice]);
+  }, [dispose, language, text, voice, stopPreview]);
 
   useEffect(() => {
     const key = (event: KeyboardEvent) => {
@@ -322,6 +370,7 @@ export function SecondVoiceStudio({
     <main
       className={`studio-shell ${contrast ? "high-contrast" : ""} ${largeType ? "large-type" : ""}`}
     >
+      <audio ref={previewAudio} preload="none" />
       <a href="#message" className="skip-link">
         Skip to your message
       </a>
@@ -453,7 +502,10 @@ export function SecondVoiceStudio({
                 <select
                   value={voice}
                   disabled={active}
-                  onChange={(event) => setVoice(event.target.value)}
+                  onChange={(event) => {
+                    stopPreview();
+                    setVoice(event.target.value);
+                  }}
                 >
                   {VOICES[language].map((item) => (
                     <option key={item.id} value={item.id}>
@@ -468,6 +520,7 @@ export function SecondVoiceStudio({
                   value={language}
                   disabled={active}
                   onChange={(event) => {
+                    stopPreview();
                     const selected = event.target.value as SupportedLanguage;
                     setLanguage(selected);
                     setVoice(VOICES[selected][0].id);
@@ -482,6 +535,21 @@ export function SecondVoiceStudio({
                 <br />
                 not translation.
               </span>
+            </div>
+            <div className="voice-audition">
+              <div>
+                <strong>{selectedVoice.description}</strong>
+                <p role="status">{previewError || "Recorded sample · your message stays unchanged"}</p>
+              </div>
+              <button
+                className="button"
+                disabled={active}
+                aria-pressed={previewing}
+                onClick={() => void previewVoice()}
+              >
+                {previewing ? <Square size={14} fill="currentColor" /> : <Volume2 size={16} />}
+                {previewing ? "Stop preview" : "Preview voice"}
+              </button>
             </div>
             <div className="action-bar">
               <button

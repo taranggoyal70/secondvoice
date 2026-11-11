@@ -1,0 +1,120 @@
+{
+  "text": "I need a little more time, but I want to answer this in my own words.",
+  "language": "english",
+  "voice": "aai-carrie",
+  "sampleRate": 24000,
+  "firstAudioMs": 150,
+  "audioBytes": 211200,
+  "durationMs": 4400,
+  "wordTimingReceived": true,
+  "frames": [
+    {
+      "type": "FlushDone",
+      "flush_id": 0,
+      "audio_duration_ms": 4400
+    },
+    {
+      "type": "WordBoundaries",
+      "flush_id": 0,
+      "audio_start_ms": 0,
+      "words": [
+        {
+          "word": "I",
+          "start": 114,
+          "end": 130,
+          "confidence": 0.9819250106811523
+        },
+        {
+          "word": "need",
+          "start": 211,
+          "end": 374,
+          "confidence": 0.7123462557792664
+        },
+        {
+          "word": "a",
+          "start": 440,
+          "end": 456,
+          "confidence": 0.2273857444524765
+        },
+        {
+          "word": "little",
+          "start": 602,
+          "end": 798,
+          "confidence": 0.9227074980735779
+        },
+        {
+          "word": "more",
+          "start": 831,
+          "end": 961,
+          "confidence": 0.5253507494926453
+        },
+        {
+          "word": "time,",
+          "start": 1075,
+          "end": 1368,
+          "confidence": 0.9760585427284241
+        },
+        {
+          "word": "but",
+          "start": 1825,
+          "end": 1922,
+          "confidence": 0.9771036505699158
+        },
+        {
+          "word": "I",
+          "start": 1971,
+          "end": 1988,
+          "confidence": 0.9994698166847229
+        },
+        {
+          "word": "want",
+          "start": 2053,
+          "end": 2183,
+          "confidence": 0.7308602333068848
+        },
+        {
+          "word": "to",
+          "start": 2232,
+          "end": 2314,
+          "confidence": 0.9883469343185425
+        },
+        {
+          "word": "answer",
+          "start": 2460,
+          "end": 2672,
+          "confidence": 0.514349639415741
+        },
+        {
+          "word": "this",
+          "start": 2721,
+          "end": 2835,
+          "confidence": 0.8439334630966187
+        },
+        {
+          "word": "in",
+          "start": 3047,
+          "end": 3080,
+          "confidence": 0.8238866329193115
+        },
+        {
+          "word": "my",
+          "start": 3128,
+          "end": 3210,
+          "confidence": 0.8773496747016907
+        },
+        {
+          "word": "own",
+          "start": 3438,
+          "end": 3552,
+          "confidence": 0.9977350234985352
+        },
+        {
+          "word": "words.",
+          "start": 3682,
+          "end": 4057,
+          "confidence": 0.7084279656410217
+        }
+      ]
+    }
+  ]
+}

@@ -1,17 +1,17 @@
 {
   "text": "I want to answer for myself. Give me a moment, and I will tell you what I need.",
   "language": "english",
-  "voice": "aai-audrey",
+  "voice": "aai-peter",
   "sampleRate": 24000,
-  "firstAudioMs": 135,
-  "audioBytes": 226560,
-  "durationMs": 4720,
+  "firstAudioMs": 138,
+  "audioBytes": 211200,
+  "durationMs": 4400,
   "wordTimingReceived": true,
   "frames": [
     {
       "type": "FlushDone",
       "flush_id": 0,
-      "audio_duration_ms": 4720
+      "audio_duration_ms": 4400
     },
     {
       "type": "WordBoundaries",
@@ -20,111 +20,111 @@
       "words": [
         {
           "word": "I",
-          "start": 179,
-          "end": 195,
-          "confidence": 0.9995866417884827
+          "start": 114,
+          "end": 130,
+          "confidence": 0.9492067098617554
         },
         {
           "word": "want",
-          "start": 260,
-          "end": 390,
-          "confidence": 0.7042023539543152
+          "start": 195,
+          "end": 325,
+          "confidence": 0.7130448818206787
         },
         {
           "word": "to",
-          "start": 423,
-          "end": 472,
-          "confidence": 0.5172697901725769
+          "start": 358,
+          "end": 456,
+          "confidence": 0.9561926126480103
         },
         {
           "word": "answer",
-          "start": 602,
-          "end": 797,
-          "confidence": 0.86234050989151
+          "start": 586,
+          "end": 717,
+          "confidence": 0.9000325202941895
         },
         {
           "word": "for",
-          "start": 846,
-          "end": 960,
-          "confidence": 0.6610134840011597
+          "start": 765,
+          "end": 880,
+          "confidence": 0.6515712141990662
         },
         {
           "word": "myself.",
-          "start": 976,
-          "end": 1513,
-          "confidence": 0.9418950080871582
+          "start": 880,
+          "end": 1368,
+          "confidence": 0.9440155029296875
         },
         {
           "word": "Give",
-          "start": 1888,
-          "end": 2018,
-          "confidence": 0.9270166754722595
+          "start": 1743,
+          "end": 1906,
+          "confidence": 0.6058312654495239
         },
         {
           "word": "me",
-          "start": 2067,
-          "end": 2164,
-          "confidence": 0.9614804983139038
+          "start": 1906,
+          "end": 2004,
+          "confidence": 0.6541775465011597
         },
         {
           "word": "a",
-          "start": 2229,
-          "end": 2246,
-          "confidence": 0.6572510600090027
+          "start": 2053,
+          "end": 2069,
+          "confidence": 0.59015291929245
         },
         {
           "word": "moment,",
-          "start": 2246,
-          "end": 2669,
-          "confidence": 0.7685797214508057
+          "start": 2069,
+          "end": 2477,
+          "confidence": 0.792165219783783
         },
         {
           "word": "and",
-          "start": 3043,
-          "end": 3108,
-          "confidence": 0.9258891940116882
+          "start": 2802,
+          "end": 2868,
+          "confidence": 0.9282136559486389
         },
         {
           "word": "I",
-          "start": 3190,
-          "end": 3206,
-          "confidence": 0.9945497512817383
+          "start": 2949,
+          "end": 2965,
+          "confidence": 0.06637153774499893
         },
         {
           "word": "will",
-          "start": 3271,
-          "end": 3320,
-          "confidence": 0.990100622177124
+          "start": 2965,
+          "end": 3080,
+          "confidence": 0.7256858944892883
         },
         {
           "word": "tell",
-          "start": 3369,
-          "end": 3564,
-          "confidence": 0.9857206344604492
+          "start": 3128,
+          "end": 3324,
+          "confidence": 0.9353672862052917
         },
         {
           "word": "you",
-          "start": 3678,
-          "end": 3710,
-          "confidence": 0.9930524826049805
+          "start": 3357,
+          "end": 3389,
+          "confidence": 0.9704205989837646
         },
         {
           "word": "what",
-          "start": 3776,
-          "end": 3889,
-          "confidence": 0.9706965684890747
+          "start": 3454,
+          "end": 3568,
+          "confidence": 0.657056450843811
         },
         {
           "word": "I",
-          "start": 3938,
-          "end": 3955,
-          "confidence": 0.91608065366745
+          "start": 3617,
+          "end": 3634,
+          "confidence": 0.8993985652923584
         },
         {
           "word": "need.",
-          "start": 4020,
-          "end": 4361,
-          "confidence": 0.9225435256958008
+          "start": 3634,
+          "end": 3960,
+          "confidence": 0.9482890367507935
         }
       ]
     }

@@ -4,6 +4,7 @@ import { ArrowRight, Play, RotateCcw, Square, Volume2 } from "lucide-react";
 import type { SculptureStyle } from "@/components/voice-sculpture";
 import { SpeechScene } from "@/components/speech-scene";
 import { PRIMARY_SENTENCE, REVISED_SENTENCE } from "@/lib/demo";
+import { VOICES } from "@/lib/voices";
 import original from "@/public/demo/original.json";
 import revised from "@/public/demo/revised.json";
 
@@ -137,7 +138,7 @@ export function RecordedDemo() {
           <Volume2 size={18} /> FROM WORDS TO VOICE
         </span>
         <span>
-          <i className="status-dot" /> Real recorded speech
+          <i className="status-dot" /> {VOICES.english.find((voice) => voice.id === original.voice)?.name} · Recorded speech
         </span>
       </div>
       <div className="choreography-toolbar">

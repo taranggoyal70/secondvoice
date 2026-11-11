@@ -1111,6 +1111,30 @@ select {
   color: var(--muted);
   margin-left: auto;
 }
+.voice-audition {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+  padding: 0 0 18px;
+}
+.voice-audition strong {
+  font-size: 12px;
+  font-weight: 500;
+}
+.voice-audition p {
+  margin: 4px 0 0;
+  font-size: 11px;
+  line-height: 1.6;
+  color: var(--muted);
+}
+.voice-audition .button {
+  min-height: 44px;
+  padding: 0 12px;
+  font-size: 12px;
+  white-space: nowrap;
+}
 .action-bar {
   display: flex;
   align-items: stretch;

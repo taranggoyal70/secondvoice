@@ -5,7 +5,8 @@ const text = process.argv[2] || 'I need a little more time, but I want to answer
 const language = process.argv[3] || 'english';
 const name = process.argv[4] || language;
 if (!/^[a-z-]+$/.test(name)) throw new Error('Invalid output name');
-const voice = language === 'spanish' ? 'aai-constanza' : 'aai-audrey';
+const voice = process.argv[5] || (language === 'spanish' ? 'aai-constanza' : 'aai-peter');
+if (!/^aai-[a-z]+$/.test(voice)) throw new Error('Invalid catalog voice');
 const response = await fetch('https://token.us.assemblyai.com/v1/token', {
   method: 'POST', headers: { Authorization: process.env.ASSEMBLYAI_API_KEY, 'Content-Type': 'application/json' },
   body: JSON.stringify({ product: 'tts', expires_in_seconds: 60, max_session_duration_seconds: 120 }),

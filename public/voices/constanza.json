@@ -1,0 +1,96 @@
+{
+  "text": "Quiero responder por mí misma. Dame un momento para encontrar mis palabras.",
+  "language": "spanish",
+  "voice": "aai-constanza",
+  "sampleRate": 24000,
+  "firstAudioMs": 134,
+  "audioBytes": 268800,
+  "durationMs": 5600,
+  "wordTimingReceived": true,
+  "frames": [
+    {
+      "type": "FlushDone",
+      "flush_id": 0,
+      "audio_duration_ms": 5600
+    },
+    {
+      "type": "WordBoundaries",
+      "flush_id": 0,
+      "audio_start_ms": 0,
+      "words": [
+        {
+          "word": "Quiero",
+          "start": 97,
+          "end": 373,
+          "confidence": 0.33056753873825073
+        },
+        {
+          "word": "responder",
+          "start": 373,
+          "end": 1006,
+          "confidence": 0.31601211428642273
+        },
+        {
+          "word": "por",
+          "start": 1314,
+          "end": 1444,
+          "confidence": 0.6367027759552002
+        },
+        {
+          "word": "mí",
+          "start": 1477,
+          "end": 1590,
+          "confidence": 0.5567896962165833
+        },
+        {
+          "word": "misma.",
+          "start": 1639,
+          "end": 1996,
+          "confidence": 0.5095179080963135
+        },
+        {
+          "word": "Dame",
+          "start": 2451,
+          "end": 2710,
+          "confidence": 0.5072224140167236
+        },
+        {
+          "word": "un",
+          "start": 2710,
+          "end": 2743,
+          "confidence": 0.027181727811694145
+        },
+        {
+          "word": "momento",
+          "start": 2775,
+          "end": 3295,
+          "confidence": 0.523796021938324
+        },
+        {
+          "word": "para",
+          "start": 3506,
+          "end": 3652,
+          "confidence": 0.28202638030052185
+        },
+        {
+          "word": "encontrar",
+          "start": 3684,
+          "end": 4204,
+          "confidence": 0.47710907459259033
+        },
+        {
+          "word": "mis",
+          "start": 4561,
+          "end": 4658,
+          "confidence": 0.7656862139701843
+        },
+        {
+          "word": "palabras.",
+          "start": 4723,
+          "end": 5259,
+          "confidence": 0.8461108803749084
+        }
+      ]
+    }
+  ]
+}
