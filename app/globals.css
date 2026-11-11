@@ -1133,6 +1133,11 @@ textarea:focus-visible {
 .question-editor label { font-size: 12px; }
 .question-editor textarea { width: 100%; min-height: 86px; resize: vertical; border: 1px solid #cbc1db; background: var(--surface); color: var(--ink); border-radius: 8px; padding: 12px; font: inherit; margin: 8px 0; }
 .question-editor .button { min-height: 44px; font-size: 12px; }
+.intent-form { margin-top: 24px; padding-top: 20px; border-top: 1px solid #ddd4e9; }
+.intent-form label { display: block; font-size: 15px; font-weight: 500; }
+.intent-form p { font-size: 12px; color: var(--muted); line-height: 1.6; margin: 6px 0 12px; }
+.intent-form input { width: 100%; min-height: 48px; padding: 12px; border: 1px solid #cfc3e1; border-radius: 8px; background: var(--surface); color: var(--ink); font: inherit; font-size: 16px; }
+.intent-form .button { margin-top: 10px; min-height: 44px; font-size: 12px; }
 .listening-bars { display: flex; gap: 4px; align-items: center; height: 28px; }
 .listening-bars i { width: 3px; height: 9px; background: #7957c4; border-radius: 2px; animation: listen-pulse 0.85s ease-in-out infinite alternate; }
 @keyframes listen-pulse { from { transform: scaleY(0.65); opacity: 0.5; } to { transform: scaleY(1.8); opacity: 1; } }

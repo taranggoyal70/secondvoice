@@ -1,17 +1,17 @@
 {
-  "text": "What would you like to drink, water or tea?",
+  "text": "Are you ready to order, or do you need a minute?",
   "language": "english",
   "voice": "aai-carrie",
   "sampleRate": 24000,
-  "firstAudioMs": 186,
-  "audioBytes": 157440,
-  "durationMs": 3280,
+  "firstAudioMs": 128,
+  "audioBytes": 134400,
+  "durationMs": 2800,
   "wordTimingReceived": true,
   "frames": [
     {
       "type": "FlushDone",
       "flush_id": 0,
-      "audio_duration_ms": 3280
+      "audio_duration_ms": 2800
     },
     {
       "type": "WordBoundaries",
@@ -19,58 +19,70 @@
       "audio_start_ms": 0,
       "words": [
         {
-          "word": "What",
-          "start": 180,
-          "end": 295,
-          "confidence": 0.7960564494132996
-        },
-        {
-          "word": "would",
-          "start": 344,
-          "end": 442,
-          "confidence": 0.6252341270446777
+          "word": "Are",
+          "start": 181,
+          "end": 230,
+          "confidence": 0.08497229963541031
         },
         {
           "word": "you",
-          "start": 442,
-          "end": 541,
-          "confidence": 0.8485613465309143
+          "start": 279,
+          "end": 362,
+          "confidence": 0.9750229120254517
         },
         {
-          "word": "like",
-          "start": 590,
-          "end": 721,
-          "confidence": 0.9520875811576843
+          "word": "ready",
+          "start": 428,
+          "end": 559,
+          "confidence": 0.9664303064346313
         },
         {
           "word": "to",
-          "start": 836,
-          "end": 869,
-          "confidence": 0.8836941719055176
+          "start": 609,
+          "end": 724,
+          "confidence": 0.9056226015090942
         },
         {
-          "word": "drink,",
-          "start": 918,
-          "end": 1279,
-          "confidence": 0.9202805757522583
-        },
-        {
-          "word": "water",
-          "start": 1672,
-          "end": 2000,
-          "confidence": 0.5350611805915833
+          "word": "order,",
+          "start": 774,
+          "end": 1037,
+          "confidence": 0.5054944753646851
         },
         {
           "word": "or",
-          "start": 2492,
-          "end": 2574,
-          "confidence": 0.33980557322502136
+          "start": 1581,
+          "end": 1614,
+          "confidence": 0.679764449596405
         },
         {
-          "word": "tea?",
-          "start": 2591,
-          "end": 2755,
-          "confidence": 0.7412140965461731
+          "word": "do",
+          "start": 1679,
+          "end": 1729,
+          "confidence": 0.43937423825263977
+        },
+        {
+          "word": "you",
+          "start": 1745,
+          "end": 1778,
+          "confidence": 0.40297746658325195
+        },
+        {
+          "word": "need",
+          "start": 1778,
+          "end": 2025,
+          "confidence": 0.834014892578125
+        },
+        {
+          "word": "a",
+          "start": 2025,
+          "end": 2042,
+          "confidence": 0.05631997063755989
+        },
+        {
+          "word": "minute?",
+          "start": 2091,
+          "end": 2289,
+          "confidence": 0.8568150401115417
         }
       ]
     }

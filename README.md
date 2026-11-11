@@ -95,6 +95,7 @@ Optional conversation assistance hears one question, prepares three possible rep
 
 - **Listening:** explicit consent checkbox and browser microphone permission; AssemblyAI streaming transcription. Stops after one turn, on cancel, when the tab is hidden, or after 30 seconds.
 - **Suggestions:** AssemblyAI LLM Gateway generates short options in English or Spanish. Replies are possibilities, not inferred preferences. Invalid output fails closed; you can always type your own.
+- **Your meaning, fewer words:** enter a short intent such as “pasta, no mushrooms” to generate full reply options. Review the wording before approving speech.
 - **One-tap speech:** the chosen reply goes directly to the existing Peter speech pipeline, preserving Stop, revision and conversation history.
 - **Recorded question:** an explicitly labeled recording runs through the same real transcription and suggestion APIs, with the microphone off.
 
@@ -161,7 +162,7 @@ npm test
 npm run build
 ```
 
-**18 automated checks** cover cancellation during token creation, late frames after closure, suspended playback clocks, cancelling queued audio, approved-message submission, phrase validation and limits, production/development origin rules, exact-token revision matching, and bounded word-flight bursts. Recording checks verify every preview’s audio format and timing, and ensure both Peter demos match their displayed text.
+**19 automated checks** cover cancellation during token creation, late frames after closure, suspended playback clocks, cancelling queued audio, approved-message submission, phrase validation and limits, production/development origin rules, exact-token revision matching, and bounded word-flight bursts. Recording checks verify every preview’s audio format and timing, and ensure both Peter demos match their displayed text.
 
 Browser verification for this version covered:
 

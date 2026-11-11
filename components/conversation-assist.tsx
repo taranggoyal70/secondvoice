@@ -19,6 +19,7 @@ type Props = {
 export function ConversationAssist({ ref, language, disabled, speakingText, onStart, onStop, onSpeak, onEdit }: Props) {
   const [consent, setConsent] = useState(false);
   const [question, setQuestion] = useState("");
+  const [intent, setIntent] = useState("");
   const [replies, setReplies] = useState<string[]>([]);
   const [phase, setPhase] = useState<"idle" | "connecting" | "listening" | "thinking" | "ready" | "error">("idle");
   const [notice, setNotice] = useState("A question comes in. You choose what comes next.");
@@ -53,7 +54,7 @@ export function ConversationAssist({ ref, language, disabled, speakingText, onSt
     };
   }, [cancel, cleanup]);
 
-  async function suggest(text: string, id: number) {
+  async function suggest(text: string, id: number, meaning = "") {
     if (id !== version.current || !text.trim()) return;
     setQuestion(text);
     setPhase("thinking");
@@ -62,7 +63,7 @@ export function ConversationAssist({ ref, language, disabled, speakingText, onSt
     try {
       const response = await fetch("/api/replies", {
         method: "POST", headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ question: text, language }),
+        body: JSON.stringify({ question: text, language, intent: meaning }),
         signal: controller.signal,
       });
       const data = await response.json();
@@ -70,7 +71,7 @@ export function ConversationAssist({ ref, language, disabled, speakingText, onSt
       if (!response.ok) throw new Error(data.error || "Suggestions couldn’t load.");
       setReplies(data.replies);
       setPhase("ready");
-      setNotice("Possible replies, not assumptions. Tap Speak only if it’s what you mean.");
+      setNotice(meaning ? "Your meaning, in a full reply. Check the wording, then choose Speak." : "Possible replies, not assumptions. Tap Speak only if it’s what you mean.");
     } catch (error) {
       if (id !== version.current) return;
       setPhase("error");
@@ -82,7 +83,7 @@ export function ConversationAssist({ ref, language, disabled, speakingText, onSt
     onStart();
     cleanup();
     const id = version.current;
-    setReplies([]); setChosen(null); setQuestion(""); setSample(recorded);
+    setReplies([]); setChosen(null); setQuestion(""); setIntent(""); setSample(recorded);
     setPhase("connecting");
     setNotice(recorded ? "Opening a recorded question. Your microphone stays off." : "Allow microphone access to hear one question.");
     const next = new ListenSession({
@@ -116,6 +117,12 @@ export function ConversationAssist({ ref, language, disabled, speakingText, onSt
           <p className="heard-question">{question || (phase === "listening" ? "Listening…" : "What would you like to say back?")}</p>
           {(phase === "listening" || phase === "thinking") && <div className="listening-bars" aria-hidden="true">{Array.from({ length: 16 }, (_, i) => <i key={i} style={{ animationDelay: `${i * 0.07}s` }} />)}</div>}
           <details className="question-editor"><summary>Type or correct the question</summary><label>Question<textarea maxLength={700} value={question} disabled={busy || disabled} onChange={event => { cleanup(); setSample(false); setQuestion(event.target.value); setReplies([]); setChosen(null); setPhase("idle"); }} /></label><button className="button" disabled={!question.trim() || busy || disabled} onClick={() => { onStart(); cleanup(); setReplies([]); setChosen(null); void suggest(question, version.current); }}>Suggest replies<ArrowRight size={15} /></button></details>
+          {question && <form className="intent-form" onSubmit={event => { event.preventDefault(); if (!intent.trim() || busy || disabled) return; onStart(); cleanup(); setReplies([]); setChosen(null); void suggest(question, version.current, intent); }}>
+            <label htmlFor="reply-intent">Something else in mind?</label>
+            <p>A few words are enough. You approve the full reply.</p>
+            <input id="reply-intent" value={intent} maxLength={160} disabled={busy || disabled} placeholder="e.g. pasta, no mushrooms" onChange={event => { cleanup(); setIntent(event.target.value); setReplies([]); setChosen(null); setPhase("idle"); }} />
+            <button className="button" disabled={!intent.trim() || busy || disabled} type="submit">Shape my reply<ArrowRight size={15} /></button>
+          </form>}
         </div>
         <div className="reply-panel" aria-busy={phase === "thinking"}>
           <span className="conversation-label">YOUR POSSIBLE REPLIES</span>
