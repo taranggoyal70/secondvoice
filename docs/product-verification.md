@@ -31,3 +31,11 @@ README images are captured from the actual production build with neutral example
 ## Limits
 
 This is not a clinical usability study, screen-reader certification, or physical-device test. Reduced-motion CSS was reviewed but the OS preference was not emulated in this browser. Hardware speaker output and network interruption on actual phones require hands-on verification. Live voice still depends on AssemblyAI and the shared public allowance. The initial page load needs internet; no offline service worker was added.
+
+## Published release check
+
+Production deployment `dpl_BRsWranA1XUqiQcfBKotKqzZPC2e` reached READY at `https://secondvoice-green.vercel.app`, using feature commit `c54353f` and presentation commit `0b57b70`. The remote main README was read back and matched the visual version.
+
+`node scripts/verify-deployment.mjs` confirmed public page 200, public short-lived token issuance 200, cross-origin request 403, and the real recording available as WAV. No token value was printed or saved in the verification report.
+
+In the production browser, the landing phrase link opened `/speak?starter=more-time` with the expected editable phrase and no automatic speech. Clicking Speak completed real synthesis and displayed six of six words with a Completed record. The production tab's browser error/warning log was empty.
