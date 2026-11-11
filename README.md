@@ -81,7 +81,7 @@ Once the workspace is open, this view does not need a synthesis request. If the 
 | **A do-over** | Undo an accidental draft clear, revise a stopped message, or bring a previous turn back into the editor. |
 | **Readable controls** | Larger message text, high contrast, visible keyboard focus, and a native modal listener view. |
 | **A phone-sized workspace** | A single-column layout and an active-playback Stop control that stays at the bottom of the screen. |
-| **English or Spanish speech** | English voices Audrey, Titus and Yasmin; Spanish voice Constanza. Language selects synthesis, not translation. |
+| **English or Spanish speech** | Peter is the default English voice, with Carrie, Yasmin, Titus and Audrey also available; Spanish voice Constanza. Preview each voice without changing your draft or starting a live session. Language selects synthesis, not translation. |
 | **A quiet fallback** | Show the message as text if live voice is unavailable. Drafts remain editable after a failed connection. |
 | **A conversation record** | The most recent 20 completed or stopped turns, kept in memory for this page only. |
 
@@ -148,7 +148,7 @@ npm test
 npm run build
 ```
 
-**12 automated checks** cover cancellation during token creation, late frames after closure, suspended playback clocks, cancelling queued audio, approved-message submission, phrase validation and limits, production/development origin rules, exact-token revision matching, and bounded word-flight bursts.
+**14 automated checks** cover cancellation during token creation, late frames after closure, suspended playback clocks, cancelling queued audio, approved-message submission, phrase validation and limits, production/development origin rules, exact-token revision matching, and bounded word-flight bursts. Recording checks verify every preview’s audio format and timing, and ensure both Peter demos match their displayed text.
 
 Browser verification for this version covered:
 
