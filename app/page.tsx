@@ -3,13 +3,16 @@ import {
   ArrowRight,
   ArrowUpRight,
   Bookmark,
-  MessageSquare,
-  MoveUpRight,
-  Square,
+  Check,
+  Eye,
+  Pause,
+  ShieldCheck,
+  Sparkles,
   Volume2,
 } from "lucide-react";
 import { Brand } from "@/components/brand";
 import { RecordedDemo } from "@/components/recorded-demo";
+import { Reveal } from "@/components/reveal";
 
 export default function Home() {
   return (
@@ -20,198 +23,261 @@ export default function Home() {
       <header className="site-nav">
         <Brand />
         <nav aria-label="Main navigation">
-          <a href="#experience">The experience</a>
-          <a href="#how-it-works">How it works</a>
+          <a href="#experience">Experience</a>
+          <a href="#how-it-works">Made for you</a>
           <a href="https://github.com/taranggoyal70/secondvoice">
-            GitHub <ArrowUpRight size={13} />
+            Source code <ArrowUpRight size={14} />
           </a>
         </nav>
-        <Link className="button primary small" href="/speak">
-          Open SecondVoice <ArrowUpRight size={15} />
+        <Link className="button primary" href="/speak">
+          Start speaking <ArrowUpRight size={17} />
         </Link>
       </header>
-      <section className="hero" id="experience">
+      <section className="hero">
         <div className="hero-copy">
           <div className="award-note">
-            <span className="award-star">✳</span> Winner · AssemblyAI Hack into
-            Speech
+            <Sparkles size={15} /> AssemblyAI Hack into Speech winner
           </div>
           <h1>
-            A pause.
+            A voice for
             <br />
-            <em>Still your turn.</em>
+            <span>what you mean.</span>
           </h1>
-          <p className="hero-description">
-            When speaking takes more, your words deserve the same space. Type a
-            thought. Speak it aloud. Change your mind.
-          </p>
-          <div className="hero-actions">
-            <Link className="button primary" href="/speak">
-              Say it your way <ArrowRight size={18} />
-            </Link>
-            <a className="quiet-link" href="#how-it-works">
-              Take a closer look <span>↓</span>
-            </a>
-          </div>
-          <p className="hero-footnote">
-            No account. No microphone. You choose every word.
-          </p>
         </div>
-        <div className="hero-demo">
-          <div className="margin-note">a little room to be heard ↘</div>
-          <RecordedDemo />
+        <div className="hero-aside">
+          <p>
+            Find the words. Speak them aloud.
+            <br />
+            Change your mind whenever you need.
+          </p>
+          <Link className="button primary hero-cta" href="/speak">
+            Make yourself heard <ArrowRight size={20} />
+          </Link>
+          <span className="hero-footnote">
+            <Check size={14} /> No account or microphone needed
+          </span>
         </div>
+      </section>
+      <section
+        className="experience-stage"
+        id="experience"
+        aria-label="Interactive recorded speech experience"
+      >
+        <RecordedDemo />
       </section>
       <div className="principle-strip">
-        <span>YOUR WORDS</span>
-        <i />
-        <span>YOUR PACE</span>
-        <i />
-        <span>YOUR NEXT THOUGHT</span>
-        <span className="strip-credit">Speech by AssemblyAI</span>
+        <p>
+          Speech that follows <strong>your lead.</strong>
+        </p>
+        <span>
+          <Volume2 size={18} /> Powered by AssemblyAI
+        </span>
+        <span>
+          Built solo by Tarang Goyal <ArrowUpRight size={15} />
+        </span>
       </div>
-      <section className="editorial-section" id="how-it-works">
-        <div className="section-heading">
-          <span className="eyebrow">01 / A CONVERSATION, NOT A SCRIPT</span>
-          <h2>
-            You don’t have to
-            <br />
-            get it right <em>the first time.</em>
-          </h2>
-          <p>
-            A pause isn’t the end of a thought. SecondVoice makes space for the
-            person behind the words.
-          </p>
-        </div>
-        <div className="feature-rows">
-          <article>
-            <span className="feature-number">01</span>
-            <div className="feature-icon">
-              <Volume2 size={24} />
-            </div>
-            <div>
-              <h3>Find the words. Then press speak.</h3>
+      <Reveal className="editorial-section">
+        <section id="how-it-works">
+          <div className="section-heading">
+            <span className="eyebrow">THERE’S A PERSON BEHIND EVERY WORD</span>
+            <h2>
+              Conversations aren’t scripts.
+              <br />
+              <span>You can change yours.</span>
+            </h2>
+            <p>
+              For moments when speaking takes more, SecondVoice gives you the
+              time and control to say things your way.
+            </p>
+          </div>
+          <div className="feature-grid">
+            <article className="feature-card compose-feature">
+              <div className="feature-top">
+                <span className="feature-icon">
+                  <Volume2 size={23} />
+                </span>
+                <span>01 / COMPOSE</span>
+              </div>
+              <h3>
+                Say exactly
+                <br />
+                what you mean.
+              </h3>
               <p>
-                Write freely, use a starter phrase, or bring back one you saved.
-                Nothing is spoken until you choose.
+                Write a thought or start with a familiar phrase. Nothing is
+                spoken until you choose.
               </p>
-            </div>
-            <ArrowUpRight className="feature-arrow" size={20} />
-          </article>
-          <article>
-            <span className="feature-number">02</span>
-            <div className="feature-icon">
-              <Square size={18} />
-            </div>
-            <div>
-              <h3>Stop means stop.</h3>
+              <div className="mini-composer" aria-hidden="true">
+                <span>
+                  I’d like a little more time
+                  <span className="static-caret" />.
+                </span>
+                <div>
+                  <span>Your words. Unchanged.</span>
+                  <Volume2 size={17} />
+                </div>
+              </div>
+            </article>
+            <article className="feature-card pause-feature">
+              <div className="feature-top">
+                <span className="feature-icon">
+                  <Pause size={23} />
+                </span>
+                <span>02 / TAKE CONTROL</span>
+              </div>
+              <h3>
+                A second thought?
+                <br />
+                There’s room for it.
+              </h3>
               <p>
-                Cut playback with one button or Escape. Your draft stays right
-                where you left it, ready for a second thought.
+                Stop playback instantly. Revise your message. Your next draft is
+                always yours to edit.
               </p>
-            </div>
-            <ArrowUpRight className="feature-arrow" size={20} />
-          </article>
-          <article>
-            <span className="feature-number">03</span>
-            <div className="feature-icon">
-              <MessageSquare size={24} />
-            </div>
-            <div>
-              <h3>There’s more than one way to be heard.</h3>
+              <div className="mini-revision" aria-hidden="true">
+                <span className="revision-old">
+                  Let me finish that thought.
+                </span>
+                <ArrowRight size={16} />
+                <strong>Actually, let me start again.</strong>
+              </div>
+            </article>
+            <article className="feature-card show-feature">
+              <div className="feature-top">
+                <span className="feature-icon">
+                  <Eye size={23} />
+                </span>
+                <span>03 / SHOW YOUR WORDS</span>
+              </div>
+              <h3>
+                Sometimes,
+                <br />a screen says it.
+              </h3>
               <p>
-                Open a large, readable message for the person beside you.
-                Showing text doesn’t need a voice connection.
+                Let someone read your message in a large, focused view. No
+                speech connection required.
               </p>
-            </div>
-            <ArrowUpRight className="feature-arrow" size={20} />
-          </article>
-        </div>
-      </section>
-      <section className="everyday-section">
+              <div className="mini-listener" aria-hidden="true">
+                <span>A MESSAGE FOR YOU</span>
+                <strong>
+                  Please ask
+                  <br />
+                  me directly.
+                </strong>
+                <span>SecondVoice.</span>
+              </div>
+            </article>
+          </div>
+        </section>
+      </Reveal>
+      <Reveal className="everyday-section">
         <div className="everyday-copy">
-          <span className="eyebrow">02 / LESS SETUP. MORE CONVERSATION.</span>
+          <span className="eyebrow">LESS SETUP. MORE CONVERSATION.</span>
           <h2>
-            For the things
+            Keep your everyday
             <br />
-            you say <em>every day.</em>
+            <span>words close.</span>
           </h2>
           <p>
-            Keep useful phrases close. Prepare your next message while the
-            current one plays. Use a larger type size or stronger contrast when
-            that feels better.
+            Some things shouldn’t need typing twice. Save the phrases you
+            choose, make them your own, and bring them back with a tap.
           </p>
           <Link className="quiet-link" href="/speak">
-            Make some space for your words <ArrowRight size={17} />
+            Build your phrase library <ArrowRight size={18} />
           </Link>
+          <div className="everyday-checks">
+            <span>
+              <Check size={16} /> Larger text & high contrast
+            </span>
+            <span>
+              <Check size={16} /> English & Spanish speech
+            </span>
+            <span>
+              <Check size={16} /> A new draft while you speak
+            </span>
+          </div>
         </div>
         <div className="phrase-preview">
-          <div>
-            <Bookmark size={18} />
-            <span>YOUR WORDS, CLOSE BY</span>
-            <span>↗</span>
+          <div className="phrase-preview-heading">
+            <span className="feature-icon">
+              <Bookmark size={21} />
+            </span>
+            <div>
+              <strong>Your phrase library</strong>
+              <span>Familiar words. Ready when you are.</span>
+            </div>
           </div>
           <Link href="/speak?starter=more-time">
-            I need a little more time.
-            <ArrowUpRight size={18} />
+            <span className="phrase-letter lavender">Aa</span>
+            <span>I need a little more time.</span>
+            <ArrowUpRight size={20} />
           </Link>
           <Link href="/speak?starter=ask-me">
-            Please ask me directly.
-            <ArrowUpRight size={18} />
+            <span className="phrase-letter peach">Aa</span>
+            <span>Please ask me directly.</span>
+            <ArrowUpRight size={20} />
           </Link>
           <Link href="/speak?starter=try-again">
-            That isn’t what I meant.
-            <ArrowUpRight size={18} />
+            <span className="phrase-letter green">Aa</span>
+            <span>That isn’t what I meant.</span>
+            <ArrowUpRight size={20} />
           </Link>
           <p>
-            Save the phrases you choose on this browser.
-            <br />
-            Your conversation isn’t saved after a reload.
+            <ShieldCheck size={15} /> Saved on your browser, only when you ask.
           </p>
         </div>
-      </section>
-      <section className="trust-section">
-        <span className="eyebrow">03 / BUILT AROUND YOUR CONTROL</span>
+      </Reveal>
+      <Reveal className="trust-section">
+        <div className="trust-heading">
+          <ShieldCheck size={28} />
+          <h2>
+            Your voice.
+            <br />
+            <span>Your call.</span>
+          </h2>
+        </div>
         <div>
-          <h3>Your words stay yours.</h3>
           <p>
-            Live speech sends only the message you choose to AssemblyAI for
-            synthesis. No microphone, voice cloning, or automatic rewriting.
-            Saved phrases stay on your browser; you can remove them any time.
+            Live speech sends only the message you choose to AssemblyAI. No
+            microphone. No voice cloning. No automatic rewriting.
           </p>
           <p className="small-print">
-            SecondVoice is an assistive communication prototype, not a
-            clinically validated communication aid. Live speech requires
-            internet and has a shared demo allowance. The text-only view works
-            without synthesis.
+            Saved phrases stay on your browser; drafts and conversation history
+            disappear when you leave. SecondVoice is an assistive communication
+            prototype. Live voice requires internet and has a shared demo
+            allowance.
           </p>
         </div>
-      </section>
+      </Reveal>
       <section className="closing-section">
-        <span className="eyebrow">
-          A LITTLE MORE TIME. A VOICE OF YOUR OWN.
-        </span>
+        <span className="eyebrow">A PAUSE. STILL YOUR TURN.</span>
         <h2>
-          What would you
+          There’s something
           <br />
-          like to <em>say?</em>
+          <span>only you can say.</span>
         </h2>
-        <Link
-          className="round-link"
-          href="/speak"
-          aria-label="Open SecondVoice speaking workspace"
-        >
-          <MoveUpRight size={38} />
+        <Link className="button primary" href="/speak">
+          Find your words <ArrowRight size={20} />
         </Link>
+        <div className="closing-wave" aria-hidden="true">
+          {Array.from({ length: 19 }, (_, i) => (
+            <i
+              key={i}
+              style={{
+                height: `${Math.round(25 + Math.sin(i / 2) ** 2 * 95)}px`,
+              }}
+            />
+          ))}
+        </div>
       </section>
       <footer className="site-footer">
         <Brand />
         <span>
-          Built solo by{" "}
-          <a href="https://github.com/taranggoyal70">Tarang Goyal</a>.
+          Built by <a href="https://github.com/taranggoyal70">Tarang Goyal</a> ·
+          Made for the person speaking.
         </span>
         <a href="https://github.com/taranggoyal70/secondvoice">
-          Explore the code <ArrowUpRight size={14} />
+          Explore the code <ArrowUpRight size={16} />
         </a>
       </footer>
     </main>

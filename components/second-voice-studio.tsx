@@ -40,19 +40,14 @@ import {
 } from "@/lib/phrases";
 
 type Status =
-  | "ready"
-  | "connecting"
-  | "speaking"
-  | "stopped"
-  | "complete"
-  | "error";
+  "ready" | "connecting" | "speaking" | "stopped" | "complete" | "error";
 type Entry = {
   id: number;
   text: string;
   played: string;
   kind: "stopped" | "complete";
 };
-const STARTERS = STARTER_PHRASES.map(phrase => phrase.text);
+const STARTERS = STARTER_PHRASES.map((phrase) => phrase.text);
 const VOICES = {
   english: [
     { id: "aai-audrey", name: "Audrey" },
@@ -85,7 +80,11 @@ const subscribeNetwork = (callback: () => void) => {
   };
 };
 
-export function SecondVoiceStudio({ initialMessage = "" }: { initialMessage?: string }) {
+export function SecondVoiceStudio({
+  initialMessage = "",
+}: {
+  initialMessage?: string;
+}) {
   const [text, setText] = useState(initialMessage);
   const [utterance, setUtterance] = useState("");
   const [heard, setHeard] = useState("");
@@ -333,6 +332,7 @@ export function SecondVoiceStudio({ initialMessage = "" }: { initialMessage?: st
             onClick={() => setLargeType(!largeType)}
           >
             <Type size={19} />
+            <span>Text size</span>
           </button>
           <button
             className="icon-button"
@@ -341,6 +341,7 @@ export function SecondVoiceStudio({ initialMessage = "" }: { initialMessage?: st
             onClick={() => setContrast(!contrast)}
           >
             <Contrast size={19} />
+            <span>Contrast</span>
           </button>
           <Link href="/" className="quiet-link back-link">
             <ArrowLeft size={15} /> About SecondVoice
@@ -350,15 +351,13 @@ export function SecondVoiceStudio({ initialMessage = "" }: { initialMessage?: st
       <div className="studio-content">
         <div className="workspace-intro">
           <div>
-            <span className="eyebrow">NO RUSH. NO SCRIPT.</span>
-            <h1>
-              Say it <em>your way.</em>
-            </h1>
+            <span className="eyebrow">YOUR SPEAKING SPACE</span>
+            <h1>What would you like to say?</h1>
           </div>
           <p>
-            Every word is yours.
+            Write. Speak. Take your time.
             <br />
-            We’ll help it be heard.
+            You’re in control.
           </p>
         </div>
         {!online && (
@@ -371,7 +370,7 @@ export function SecondVoiceStudio({ initialMessage = "" }: { initialMessage?: st
           <section className="compose-panel" aria-labelledby="compose-title">
             <div className="panel-heading">
               <span className="panel-index">01</span>
-              <h2 id="compose-title">Your words</h2>
+              <h2 id="compose-title">Write your message</h2>
               <span>{active ? "Your next draft" : "A place to begin"}</span>
             </div>
             <div className="editor-card">
@@ -579,7 +578,7 @@ export function SecondVoiceStudio({ initialMessage = "" }: { initialMessage?: st
           <section className="playback-panel" aria-labelledby="playback-title">
             <div className="panel-heading">
               <span className="panel-index coral">02</span>
-              <h2 id="playback-title">Your voice</h2>
+              <h2 id="playback-title">Playback</h2>
               <span>At your pace</span>
             </div>
             <div className={`output-card is-${status}`}>
@@ -615,13 +614,13 @@ export function SecondVoiceStudio({ initialMessage = "" }: { initialMessage?: st
                   </p>
                 ) : (
                   <p className="output-empty">
-                    Your next thought
+                    Ready when
                     <br />
-                    starts <em>here.</em>
+                    <em>you are.</em>
                     <span>
                       Write a message to begin.
                       <br />
-                      We’ll leave room for your voice.
+                      Press Speak to hear your words.
                     </span>
                   </p>
                 )}

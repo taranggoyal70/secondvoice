@@ -7,14 +7,14 @@ export const metadata: Metadata = {
   metadataBase: new URL("https://secondvoice-green.vercel.app"),
   title: "SecondVoice — speech that stays yours",
   openGraph: {
-    title: "A pause. Still your turn.",
+    title: "A voice for what you mean.",
     description:
       "Your words. Your pace. Compose, speak, stop, and revise with SecondVoice.",
     type: "website",
   },
   twitter: {
     card: "summary_large_image",
-    title: "SecondVoice — A pause. Still your turn.",
+    title: "SecondVoice — A voice for what you mean.",
   },
   description:
     "An assistive communication prototype. Compose a message, speak it aloud, stop, and revise with AssemblyAI streaming speech.",
