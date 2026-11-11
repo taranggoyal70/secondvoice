@@ -42,6 +42,10 @@ The landing page lets you hear three moments: **Speak → Interrupt → Revise**
 
 <sub>Actual browser capture of the labeled recorded example. The GIF is silent; open the example to hear the real AssemblyAI audio. The example uses saved recordings and makes no live synthesis requests.</sub>
 
+The written draft stays visible while individual words travel to the voice panel as timing arrives. Stop cancels those in-flight words, cuts the speech ribbon, and leaves the timed boundary visible. Revise preserves the previous thought and highlights the words that changed. The same renderer handles the live workspace; a new completed conversational turn is not automatically treated as a revision.
+
+Motion respects reduced-motion settings. Resizing, stopping, hiding the page, and starting a new run clear decorative particles. The ribbon illustrates playback state; it is not an audio spectrum.
+
 In the speaking workspace, **Stop is a real cancellation**. It sends the provider’s cancel frame, stops queued Web Audio buffers, closes the session, and invalidates late callbacks. It does not simply change a label or mute a looping demo.
 
 <details>
@@ -136,7 +140,7 @@ npm test
 npm run build
 ```
 
-**10 automated checks** cover cancellation during token creation, late frames after closure, suspended playback clocks, cancelling queued audio, approved-message submission, phrase validation and limits, and production/development origin rules.
+**12 automated checks** cover cancellation during token creation, late frames after closure, suspended playback clocks, cancelling queued audio, approved-message submission, phrase validation and limits, production/development origin rules, exact-token revision matching, and bounded word-flight bursts.
 
 Browser verification for this version covered:
 
@@ -164,11 +168,13 @@ app/
 components/
   second-voice-studio.tsx      Draft, playback, listener view and phrase library
   recorded-demo.tsx           User-controlled recorded speech chapters
+  speech-scene.tsx            Word transfer, stop boundary and revision highlights
   brand.tsx                   Shared SecondVoice identity
 lib/
   assemblyai/tts-session.ts    Streaming audio, word timing and cancellation
   phrases.ts                  Bounded browser-local phrase storage
   request-origin.ts           Same-origin validation
+  speech-motion.ts            Word diffs and bounded timing bursts
 public/demo/                  Original AssemblyAI recordings and timing files
 assets/readme/                Real product screenshots and browser capture
 tests/                       Playback, lifecycle, phrases and origin checks
