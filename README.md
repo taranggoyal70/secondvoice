@@ -56,6 +56,14 @@ In the speaking workspace, **Stop is a real cancellation**. It sends the provide
 The stopped message remains available through **Revise this message** or **Use again**. The displayed timed words are best-effort; they do not prove exactly what another person heard.
 </details>
 
+## Give the voice a shape
+
+The recorded example has three selectable procedural motion styles: **Orbit**, **Ribbon**, and **Bloom**. Their movement follows playback state and word timing. Stop freezes the sculpture; revision changes its shape and color; completion gets a short, finite finish.
+
+The walkthrough above shows Orbit stopping with the message, then Bloom accompanying the revised thought.
+
+Choose **Calm** to remove the moving sculpture and word flights without stopping the audio. The everyday speaking workspace keeps its lighter presentation. Reduced motion produces a static rendering; hidden and offscreen scenes stop their animation loop. This artwork illustrates speech state, not a measured frequency spectrum.
+
 ## Sometimes, showing the words is enough
 
 Choose **Show message** to give the person beside you a large, readable view. Opening it stops any active speech. Escape or **Back to writing** returns to the draft, with keyboard focus restored by the native dialog.
@@ -169,6 +177,7 @@ components/
   second-voice-studio.tsx      Draft, playback, listener view and phrase library
   recorded-demo.tsx           User-controlled recorded speech chapters
   speech-scene.tsx            Word transfer, stop boundary and revision highlights
+  voice-sculpture.tsx         Procedural Orbit, Ribbon and Bloom demo renderers
   brand.tsx                   Shared SecondVoice identity
 lib/
   assemblyai/tts-session.ts    Streaming audio, word timing and cancellation
