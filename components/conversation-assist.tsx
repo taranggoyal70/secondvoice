@@ -108,6 +108,7 @@ export function ConversationAssist({ ref, language, disabled, speakingText, onSt
           {disabled && <button className="button stop-button" onClick={onStop}><Square size={15} fill="currentColor" />Stop speech</button>}
           {busy ? <button className="button listen-button" onClick={cancel}><Square size={15} />Cancel listening & suggestions</button> : <button className="button primary listen-button" disabled={!consent || disabled} onClick={() => start()}><Mic size={17} />Listen to a question</button>}
           <button className="text-button" disabled={busy || disabled} onClick={() => start(true)}><Play size={14} />Try a recorded question</button>
+          <button className="text-button hold-turn" disabled={disabled} onClick={() => { const phrase = language === "spanish" ? "Dame un momento, por favor." : "Give me a moment, please."; cleanup(); setChosen(phrase); setPhase("idle"); onSpeak(phrase); }}><Volume2 size={15} />{language === "spanish" ? "Dame un momento" : "Give me a moment"}</button>
         </div>
         <p className="listening-privacy">Audio goes to AssemblyAI for transcription; the question goes to its AI gateway for reply suggestions. Listening ends after one turn. Nothing is spoken until you choose.</p>
       </div>
