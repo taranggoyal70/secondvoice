@@ -28,6 +28,7 @@ import {
 } from "react";
 import { SpeechScene } from "@/components/speech-scene";
 import { Brand } from "@/components/brand";
+import { ConversationAssist, type ConversationHandle } from "@/components/conversation-assist";
 import { DEFAULT_ENGLISH_VOICE, VOICES } from "@/lib/voices";
 import {
   AssemblyAITTSSession,
@@ -104,6 +105,7 @@ export function SecondVoiceStudio({
   const [phraseNotice, setPhraseNotice] = useState("");
   const [clearedDraft, setClearedDraft] = useState<string | null>(null);
   const session = useRef<AssemblyAITTSSession | null>(null);
+  const conversation = useRef<ConversationHandle>(null);
   const generation = useRef(0);
   const busy = useRef(false);
   const lastPlayed = useRef("");
@@ -166,6 +168,7 @@ export function SecondVoiceStudio({
   }, [disposePreview]);
   async function previewVoice() {
     if (active) return;
+    conversation.current?.cancel();
     if (previewing) { stopPreview(); return; }
     stopPreview();
     const player = previewAudio.current;
@@ -188,6 +191,7 @@ export function SecondVoiceStudio({
   }
 
   const stop = useCallback(() => {
+    conversation.current?.cancel();
     stopPreview();
     if (!busy.current) return;
     const played = lastPlayed.current;
@@ -207,9 +211,11 @@ export function SecondVoiceStudio({
     );
   }, [dispose, stopPreview]);
 
-  const speak = useCallback(async () => {
-    const approved = text.trim();
+  const speak = useCallback(async (reply?: string) => {
+    const approved = (reply ?? text).trim();
     if (busy.current || !approved || approved.length > MAX_MESSAGE) return;
+    conversation.current?.cancel();
+    if (reply !== undefined) setText(approved);
     stopPreview();
     if (!navigator.onLine) {
       setNotice("You’re offline. You can still show your message on screen.");
@@ -419,6 +425,16 @@ export function SecondVoiceStudio({
             return when you reconnect.
           </div>
         )}
+        <ConversationAssist
+          key={language}
+          ref={conversation}
+          language={language}
+          disabled={active}
+          onStart={stop}
+          onStop={stop}
+          onSpeak={(reply) => void speak(reply)}
+          onEdit={(reply) => selectPhrase(reply)}
+        />
         <div className="workspace-grid">
           <section className="compose-panel" aria-labelledby="compose-title">
             <div className="panel-heading">

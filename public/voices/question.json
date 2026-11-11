@@ -1,0 +1,78 @@
+{
+  "text": "What would you like to drink, water or tea?",
+  "language": "english",
+  "voice": "aai-carrie",
+  "sampleRate": 24000,
+  "firstAudioMs": 186,
+  "audioBytes": 157440,
+  "durationMs": 3280,
+  "wordTimingReceived": true,
+  "frames": [
+    {
+      "type": "FlushDone",
+      "flush_id": 0,
+      "audio_duration_ms": 3280
+    },
+    {
+      "type": "WordBoundaries",
+      "flush_id": 0,
+      "audio_start_ms": 0,
+      "words": [
+        {
+          "word": "What",
+          "start": 180,
+          "end": 295,
+          "confidence": 0.7960564494132996
+        },
+        {
+          "word": "would",
+          "start": 344,
+          "end": 442,
+          "confidence": 0.6252341270446777
+        },
+        {
+          "word": "you",
+          "start": 442,
+          "end": 541,
+          "confidence": 0.8485613465309143
+        },
+        {
+          "word": "like",
+          "start": 590,
+          "end": 721,
+          "confidence": 0.9520875811576843
+        },
+        {
+          "word": "to",
+          "start": 836,
+          "end": 869,
+          "confidence": 0.8836941719055176
+        },
+        {
+          "word": "drink,",
+          "start": 918,
+          "end": 1279,
+          "confidence": 0.9202805757522583
+        },
+        {
+          "word": "water",
+          "start": 1672,
+          "end": 2000,
+          "confidence": 0.5350611805915833
+        },
+        {
+          "word": "or",
+          "start": 2492,
+          "end": 2574,
+          "confidence": 0.33980557322502136
+        },
+        {
+          "word": "tea?",
+          "start": 2591,
+          "end": 2755,
+          "confidence": 0.7412140965461731
+        }
+      ]
+    }
+  ]
+}

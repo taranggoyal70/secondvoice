@@ -4,7 +4,7 @@ import { SecondVoiceStudio } from "@/components/second-voice-studio";
 export const metadata: Metadata = {
   title: "Your words — SecondVoice",
   description:
-    "Compose, speak, stop, and revise. A focused communication workspace with reusable phrases and a large listener view.",
+    "Listen to a question, choose a suggested reply, and speak. Or write, stop, revise, and show your own words.",
 };
 export default async function SpeakPage({ searchParams }: { searchParams: Promise<{ starter?: string | string[] }> }) {
   const { starter } = await searchParams;

@@ -54,7 +54,7 @@ export default function Home() {
             Make yourself heard <ArrowRight size={20} />
           </Link>
           <span className="hero-footnote">
-            <Check size={14} /> No account or microphone needed
+            <Check size={14} /> No account needed · optional listening
           </span>
         </div>
       </section>
@@ -238,8 +238,7 @@ export default function Home() {
         </div>
         <div>
           <p>
-            Live speech sends only the message you choose to AssemblyAI. No
-            microphone. No voice cloning. No automatic rewriting.
+            Speaking sends your chosen message to AssemblyAI. Optional listening sends audio for transcription and the question for AI reply suggestions. You choose or edit every reply before it speaks. No voice cloning.
           </p>
           <p className="small-print">
             Saved phrases stay on your browser; drafts and conversation history
